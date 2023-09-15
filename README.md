@@ -22,3 +22,10 @@ Supported platforms:
   - macOS
       * `x86_64-apple-macos10.9` (macOS Mavericks and newer on Intel CPU)
       * `arm64-apple-macos11` (macOS Big Sur and newer on Apple M1 CPU)
+
+      To build universal mac binary, this needs to be done manually (for now) on an arm mac: 
+```
+    mkdir -p mac
+    lipo -create ./mac_x86_64/ffmpeg ./mac_arm64/ffmpeg -output ./mac/ffmpeg
+    lipo -create ./mac_x86_64/ffprobe ./mac_arm64/ffprobe -output ./mac/ffprobe
+```
