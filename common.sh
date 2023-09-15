@@ -72,7 +72,6 @@ FFMPEG_CONFIGURE_FLAGS=(
 --enable-swscale
 --enable-libmp3lame
 --enable-zlib
---enable-aresample
 --enable-protocol=file
 --enable-protocol=pipe
 --enable-protocol=concat
@@ -116,6 +115,7 @@ FFMPEG_CONFIGURE_FLAGS=(
 --enable-filter=null
 --enable-filter=setpts
 --enable-filter=trim
+--enable-filter=aresample
 --enable-ffmpeg
 --enable-ffprobe
 )
