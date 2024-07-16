@@ -118,6 +118,10 @@ FFMPEG_CONFIGURE_FLAGS=(
 --enable-filter=aresample
 --enable-ffmpeg
 --enable-ffprobe
+--enable-muxer=s16le
+--enable-demuxer=s16le
+--enable-decoder=pcm_s16le
+--enable-encoder=pcm_s16le
 )
 
 
