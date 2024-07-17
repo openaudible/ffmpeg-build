@@ -123,6 +123,10 @@ FFMPEG_CONFIGURE_FLAGS=(
 --enable-encoder=pcm_s16le
 --enable-demuxer=wav  # Enable wav demuxer
 --enable-parser=pcm_s16le  # Enable PCM S16LE parser
+--enable-muxer=pcm
+--enable-demuxer=pcm
+--enable-encoder=pcm
+--enable-decoder=pcm
 
 
 
