@@ -116,12 +116,13 @@ FFMPEG_CONFIGURE_FLAGS=(
 --enable-filter=setpts
 --enable-filter=trim
 --enable-filter=aresample
---enable-ffmpeg
---enable-ffprobe
 --enable-muxer=s16le
+--enable-muxer=wav  # Enable wav muxer
 --enable-demuxer=s16le
 --enable-decoder=pcm_s16le
 --enable-encoder=pcm_s16le
+--enable-ffmpeg
+--enable-ffprobe
 )
 
 
