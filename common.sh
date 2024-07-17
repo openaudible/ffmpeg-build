@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-FFMPEG_VERSION=5.1.2
-FFMPEG_TARBALL=ffmpeg-$FFMPEG_VERSION.tar.bz2
+FFMPEG_VERSION=7.0
+FFMPEG_TARBALL=ffmpeg-$FFMPEG_VERSION.tar.gz
 FFMPEG_TARBALL_URL=http://ffmpeg.org/releases/$FFMPEG_TARBALL
 
 do_svn_checkout() {
@@ -38,7 +38,7 @@ extract_ffmpeg()
 if [ ! -e $FFMPEG_TARBALL ]
 then
 	echo "curl get $FFMPEG_TARBALL_URL"
-        curl -O $FFMPEG_TARBALL_URL
+        curl -s -L -O $FFMPEG_TARBALL_URL
 fi
 
 cp patch.* $BUILD_DIR
