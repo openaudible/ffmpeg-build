@@ -6,6 +6,12 @@ cd $(dirname $0)
 BASE_DIR=$(pwd)
 
 source common.sh
+ARCH="x86_64"
+
+if [ -z "$ARCH" ]; then
+    ARCH="x86_64"
+    echo "Default ARCH=$ARCH"
+fi
 
 
 case $ARCH in

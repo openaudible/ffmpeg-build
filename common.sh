@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-
-FFMPEG_VERSION=7.0
-FFMPEG_TARBALL=ffmpeg-$FFMPEG_VERSION.tar.gz
+# https://ffmpeg.org/releases/ffmpeg-5.1.2.tar.bz2
+FFMPEG_VERSION=5.1.2
+FFMPEG_TARBALL=ffmpeg-$FFMPEG_VERSION.tar.bz2
 FFMPEG_TARBALL_URL=http://ffmpeg.org/releases/$FFMPEG_TARBALL
 
 do_svn_checkout() {
