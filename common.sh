@@ -111,6 +111,7 @@ FFMPEG_CONFIGURE_FLAGS=(
 --enable-filter=aformat
 --enable-filter=anull
 --enable-filter=atrim
+--enable-filter=atempo
 --enable-filter=format
 --enable-filter=null
 --enable-filter=setpts
