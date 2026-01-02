@@ -1,5 +1,27 @@
 
+# Build artifacts and output directories
 artifacts/
+builds/
 build_*
+bin/
+
+# FFmpeg binaries
+ffmpeg
+ffprobe
+
+# Test files and directories
+test/
+test.wav
+*.wav
+
+# Linux runner artifacts
+linux_runner/
+
+# Compressed archives
 *.bz2
+*.xz
+*.tar.xz
+*.tar.bz2
+*.tar.gz
+*.tgz
 

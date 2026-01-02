@@ -6,12 +6,6 @@ cd $(dirname $0)
 BASE_DIR=$(pwd)
 
 source common.sh
-ARCH="x86_64"
-
-if [ -z "$ARCH" ]; then
-    ARCH="x86_64"
-    echo "Default ARCH=$ARCH"
-fi
 
 
 case $ARCH in
@@ -79,14 +73,6 @@ cd $BUILD_DIR
 PREFIX=$BASE_DIR/$OUTPUT_DIR
 FFMPEG_CONFIGURE_FLAGS+=(--prefix=$PREFIX)
 
-# Build lame
-
-# Add static linking flags to ffmpeg
-FFMPEG_CONFIGURE_FLAGS+=(--disable-shared --enable-static)
-FFMPEG_CONFIGURE_FLAGS+=(--extra-cflags="-I$PREFIX/include")
-FFMPEG_CONFIGURE_FLAGS+=(--extra-ldflags="-L$PREFIX/lib")
-
-
 
 
 do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame lame_svn
@@ -117,10 +103,8 @@ echo "configure ffmpeg: ${FFMPEG_CONFIGURE_FLAGS[@]}"
 
 
 ./configure "${FFMPEG_CONFIGURE_FLAGS[@]}" || (cat ffbuild/config.log && exit 1)
-make clean
 
-make -j8
-
+make
 echo "make complete"
 make install
 echo "make install complete!"
