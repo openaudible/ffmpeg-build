@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# https://ffmpeg.org/releases/ffmpeg-5.1.2.tar.bz2
-FFMPEG_VERSION=5.1.2
-FFMPEG_TARBALL=ffmpeg-$FFMPEG_VERSION.tar.bz2
+# https://ffmpeg.org/releases/ffmpeg-6.1.tar.xz
+FFMPEG_VERSION=6.1
+FFMPEG_TARBALL=ffmpeg-$FFMPEG_VERSION.tar.xz
 FFMPEG_TARBALL_URL=http://ffmpeg.org/releases/$FFMPEG_TARBALL
 
 do_svn_checkout() {
@@ -78,6 +78,7 @@ FFMPEG_CONFIGURE_FLAGS=(
 --enable-protocol=concatf
 --enable-parser=aac
 --enable-parser=ac3
+--enable-parser=eac3
 --enable-demuxer=ffmetadata
 --enable-demuxer=mjpeg_2000
 --enable-demuxer=image2
@@ -89,6 +90,9 @@ FFMPEG_CONFIGURE_FLAGS=(
 --enable-demuxer=mp3
 --enable-demuxer=apng
 --enable-demuxer=mjpeg
+--enable-demuxer=ac3
+--enable-demuxer=eac3
+--enable-demuxer=truehd
 --enable-muxer=ffmetadata
 --enable-muxer=mp4
 --enable-muxer=mov
@@ -107,6 +111,10 @@ FFMPEG_CONFIGURE_FLAGS=(
 --enable-decoder=mp3
 --enable-decoder=aac
 --enable-decoder=mjpeg
+--enable-decoder=ac3
+--enable-decoder=eac3
+--enable-decoder=ac4
+--enable-decoder=truehd
 --enable-filter=scale
 --enable-filter=aformat
 --enable-filter=anull
@@ -121,6 +129,10 @@ FFMPEG_CONFIGURE_FLAGS=(
 --enable-demuxer=pcm_s16le
 --enable-decoder=pcm_s16le
 --enable-encoder=pcm_s16le
+--enable-decoder=pcm_s24le
+--enable-encoder=pcm_s24le
+--enable-decoder=pcm_f32le
+--enable-encoder=pcm_f32le
 --enable-demuxer=wav  # Enable wav demuxer
 --enable-parser=pcm_s16le  # Enable PCM S16LE parser
 --enable-muxer=pcm_s16le

@@ -5,6 +5,9 @@ builds/
 build_*
 bin/
 
+# FFmpeg source directories
+ffmpeg-*/
+
 # FFmpeg binaries
 ffmpeg
 ffprobe
@@ -13,6 +16,9 @@ ffprobe
 test/
 test.wav
 *.wav
+
+# Build logs
+build.log
 
 # Linux runner artifacts
 linux_runner/
