@@ -44,12 +44,12 @@ fi
 rm -rf "$OUTPUT_DIR"
 mkdir -p "$OUTPUT_DIR"
 
-artifacts=$(gh run view --repo "$REPO" "$RUN_ID" --json artifacts -q '.artifacts[] | select(.name == "apps") | .name')
+artifacts=$(gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts" -q '.artifacts[] | select(.name == "apps") | .name')
 
 if [[ -z "$artifacts" ]]; then
     echo "Error: 'apps' artifact not found. Build may have failed or artifacts expired."
     echo "Available artifacts:"
-    gh run view --repo "$REPO" "$RUN_ID" --json artifacts -q '.artifacts[].name'
+    gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts" -q '.artifacts[].name'
     exit 1
 fi
 

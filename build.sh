@@ -56,7 +56,7 @@ while true; do
         if [[ "$conclusion" == "success" ]]; then
             echo
             echo "Downloading binaries..."
-            ./download-builds.sh "$RUN_ID" "$OUTPUT_DIR" > /dev/null 2>&1
+            ./download-builds.sh "$RUN_ID" "$OUTPUT_DIR"
 
             echo
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
