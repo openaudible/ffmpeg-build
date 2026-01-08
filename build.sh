@@ -17,17 +17,23 @@ fi
 
 echo "Triggering build on branch: $BRANCH"
 
-run_output=$(gh workflow run build.yml --ref "$BRANCH" 2>&1)
-
-if [[ "$run_output" =~ "Created workflow_dispatch event" ]]; then
-    sleep 3
-    RUN_ID=$(gh run list --workflow=build.yml --limit 1 --json databaseId -q '.[0].databaseId')
-    echo "Build started: #$RUN_ID"
-else
+if ! gh workflow run build.yml --ref "$BRANCH" 2>&1; then
     echo "ERROR: Failed to trigger workflow"
-    echo "$run_output"
     exit 1
 fi
+
+echo "Waiting for workflow to start..."
+sleep 5
+
+RUN_ID=$(gh run list --workflow=build.yml --branch="$BRANCH" --limit 1 --json databaseId,status -q '.[0] | select(.status != "completed") | .databaseId')
+
+if [[ -z "$RUN_ID" ]]; then
+    echo "ERROR: Could not find running workflow"
+    echo "Check manually: gh run list --workflow=build.yml --limit 5"
+    exit 1
+fi
+
+echo "Build started: #$RUN_ID"
 
 echo "Waiting for build to complete..."
 echo "(Monitor in detail: ./monitor-build.sh $RUN_ID)"
