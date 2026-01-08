@@ -31,3 +31,6 @@ linux_runner/
 *.tar.gz
 *.tgz
 
+# Unused/legacy files
+unused/
+
