@@ -65,6 +65,29 @@ Removes:
 - Platform-specific build directories
 - Temporary build.XXXXXXXX directories
 
+### cancel-builds.sh
+Manage GitHub Actions workflow runs (cancel and delete).
+
+```bash
+./cancel-builds.sh [command]
+```
+
+**Commands:**
+- `list` - Show recent workflow runs
+- `cancel-running` - Cancel all running/queued workflows
+- `delete-old [days]` - Delete completed runs older than N days (default: 30)
+- `delete-all` - Delete all completed workflow runs
+- `cancel <run-id>` - Cancel specific workflow run
+- `delete <run-id>` - Delete specific workflow run
+
+**Examples:**
+```bash
+./cancel-builds.sh list              # Show recent runs
+./cancel-builds.sh cancel-running    # Cancel all in-progress
+./cancel-builds.sh delete-old 7      # Delete runs older than 7 days
+./cancel-builds.sh cancel 12345678   # Cancel specific run
+```
+
 ## Platform Build Scripts
 
 These are called by GitHub Actions (can be run locally):
