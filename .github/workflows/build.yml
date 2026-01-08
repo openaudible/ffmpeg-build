@@ -145,7 +145,7 @@ jobs:
           cp ./ffmpeg-windows-x86_64/ffmpeg-6.1-audio-x86_64-win/bin/ff* apps/win_x86_64/
           cp ./ffmpeg-windows-arm64/ffmpeg-6.1-audio-aarch64-win/bin/ff* apps/win_arm64/
           cp ./ffmpeg-linux-x86_64/ffmpeg-6.1-audio-x86_64-linux-gnu/bin/ff* apps/linux_x86_64
-          cp ./ffmpeg-linux-arm64/ffmpeg-6.1-audio-aarch64-linux-gnu/bin/ff* apps/linux_aarch64
+          cp ./ffmpeg-linux-arm64/ffmpeg-6.1-audio-arm64-linux-gnu/bin/ff* apps/linux_aarch64
           cp ./ffmpeg-universal-macos/bin/ff* apps/mac/
    
       # upload this so it is available to download in action artifacts.    
