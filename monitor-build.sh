@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+REPO="openaudible/ffmpeg-build"
+
 set -euo pipefail
 
 RUN_ID="${1:-}"
@@ -9,7 +11,7 @@ if [[ -z "$RUN_ID" ]]; then
     echo "Usage: $0 <run-id>"
     echo
     echo "Get recent run IDs with:"
-    echo "  gh run list --workflow=build.yml --limit 10"
+    echo "  gh run list --repo "$REPO" --workflow=build.yml --limit 10"
     exit 1
 fi
 
@@ -25,7 +27,7 @@ echo
 previous_status=""
 
 while true; do
-    run_data=$(gh run view "$RUN_ID" --json status,conclusion,displayTitle,createdAt,url,jobs)
+    run_data=$(gh run view --repo "$REPO" "$RUN_ID" --json status,conclusion,displayTitle,createdAt,url,jobs)
 
     status=$(echo "$run_data" | jq -r '.status')
     conclusion=$(echo "$run_data" | jq -r '.conclusion // "in_progress"')
@@ -58,7 +60,7 @@ while true; do
             echo "✗ Build failed"
             echo
             echo "View logs with:"
-            echo "  gh run view $RUN_ID --log-failed"
+            echo "  gh run view --repo "$REPO" $RUN_ID --log-failed"
         else
             echo "Build completed with status: $conclusion"
         fi

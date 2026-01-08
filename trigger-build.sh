@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+REPO="openaudible/ffmpeg-build"
+
 set -euo pipefail
 
 WORKFLOW_FILE="build.yml"
@@ -20,18 +22,18 @@ if ! gh auth status &> /dev/null; then
     exit 1
 fi
 
-run_id=$(gh workflow run "$WORKFLOW_FILE" --ref "$BRANCH" --json databaseId -q '.databaseId' 2>&1)
+run_id=$(gh workflow run --repo "$REPO" "$WORKFLOW_FILE" --ref "$BRANCH" --json databaseId -q '.databaseId' 2>&1)
 
 if [[ "$run_id" =~ ^[0-9]+$ ]]; then
     echo "✓ Workflow triggered successfully"
     echo "  Run ID: $run_id"
-    echo "  View at: $(gh run view $run_id --web --print-url 2>/dev/null || echo 'Run gh run view $run_id --web')"
+    echo "  View at: $(gh run view --repo "$REPO" $run_id --web --print-url 2>/dev/null || echo 'Run gh run view --repo "$REPO" $run_id --web')"
     echo
     echo "Monitor progress with: ./monitor-build.sh $run_id"
 else
-    gh workflow run "$WORKFLOW_FILE" --ref "$BRANCH"
+    gh workflow run --repo "$REPO" "$WORKFLOW_FILE" --ref "$BRANCH"
     echo "✓ Workflow triggered"
     echo
-    echo "Find the run ID with: gh run list --workflow=$WORKFLOW_FILE --limit 5"
+    echo "Find the run ID with: gh run list --repo "$REPO" --workflow=$WORKFLOW_FILE --limit 5"
     echo "Then monitor with: ./monitor-build.sh <run-id>"
 fi

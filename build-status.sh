@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 
+REPO="openaudible/ffmpeg-build"
+
 set -euo pipefail
 
 RUN_ID="${1:-}"
 WAIT="${2:-false}"
 
 if [[ -z "$RUN_ID" ]]; then
-    recent_run=$(gh run list --workflow=build.yml --limit 1 --json databaseId -q '.[0].databaseId' 2>/dev/null)
+    recent_run=$(gh run list --repo "$REPO" --workflow=build.yml --limit 1 --json databaseId -q '.[0].databaseId' 2>/dev/null)
     if [[ -n "$recent_run" ]]; then
         RUN_ID="$recent_run"
     else
@@ -22,7 +24,7 @@ fi
 
 if [[ "$WAIT" == "true" ]] || [[ "$WAIT" == "--wait" ]]; then
     while true; do
-        status=$(gh run view "$RUN_ID" --json status -q '.status')
+        status=$(gh run view --repo "$REPO" "$RUN_ID" --json status -q '.status')
         if [[ "$status" == "completed" ]]; then
             break
         fi
@@ -30,7 +32,7 @@ if [[ "$WAIT" == "true" ]] || [[ "$WAIT" == "--wait" ]]; then
     done
 fi
 
-run_data=$(gh run view "$RUN_ID" --json status,conclusion,displayTitle,url,jobs,createdAt 2>/dev/null)
+run_data=$(gh run view --repo "$REPO" "$RUN_ID" --json status,conclusion,displayTitle,url,jobs,createdAt 2>/dev/null)
 
 if [[ -z "$run_data" ]]; then
     echo "ERROR: Run #$RUN_ID not found"
@@ -67,6 +69,6 @@ else
     echo "FAILED: Build #$RUN_ID failed"
     echo "JOBS: $failed_jobs"
     echo "URL: $url"
-    echo "LOGS: gh run view $RUN_ID --log-failed"
+    echo "LOGS: gh run view --repo "$REPO" $RUN_ID --log-failed"
     exit 1
 fi

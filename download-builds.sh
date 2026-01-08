@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+REPO="openaudible/ffmpeg-build"
+
 set -euo pipefail
 
 RUN_ID="${1:-}"
@@ -9,7 +11,7 @@ if [[ -z "$RUN_ID" ]]; then
     echo "Usage: $0 <run-id> [output-dir]"
     echo
     echo "Get recent run IDs with:"
-    echo "  gh run list --workflow=build.yml --limit 10"
+    echo "  gh run list --repo "$REPO" --workflow=build.yml --limit 10"
     echo
     echo "Default output directory: downloads/"
     exit 1
@@ -24,8 +26,8 @@ echo "Downloading builds from run #$RUN_ID"
 echo "Output directory: $OUTPUT_DIR"
 echo
 
-status=$(gh run view "$RUN_ID" --json status,conclusion -q '.status')
-conclusion=$(gh run view "$RUN_ID" --json status,conclusion -q '.conclusion // "in_progress"')
+status=$(gh run view --repo "$REPO" "$RUN_ID" --json status,conclusion -q '.status')
+conclusion=$(gh run view --repo "$REPO" "$RUN_ID" --json status,conclusion -q '.conclusion // "in_progress"')
 
 if [[ "$status" != "completed" ]]; then
     echo "Error: Build is still running (status: $status)"
@@ -35,19 +37,19 @@ fi
 
 if [[ "$conclusion" != "success" ]]; then
     echo "Error: Build failed with conclusion: $conclusion"
-    echo "View logs with: gh run view $RUN_ID --log-failed"
+    echo "View logs with: gh run view --repo "$REPO" $RUN_ID --log-failed"
     exit 1
 fi
 
 rm -rf "$OUTPUT_DIR"
 mkdir -p "$OUTPUT_DIR"
 
-artifacts=$(gh run view "$RUN_ID" --json artifacts -q '.artifacts[] | select(.name == "apps") | .name')
+artifacts=$(gh run view --repo "$REPO" "$RUN_ID" --json artifacts -q '.artifacts[] | select(.name == "apps") | .name')
 
 if [[ -z "$artifacts" ]]; then
     echo "Error: 'apps' artifact not found. Build may have failed or artifacts expired."
     echo "Available artifacts:"
-    gh run view "$RUN_ID" --json artifacts -q '.artifacts[].name'
+    gh run view --repo "$REPO" "$RUN_ID" --json artifacts -q '.artifacts[].name'
     exit 1
 fi
 
@@ -55,7 +57,7 @@ temp_dir=$(mktemp -d)
 trap "rm -rf $temp_dir" EXIT
 
 echo "Downloading 'apps' artifact..."
-gh run download "$RUN_ID" --name apps --dir "$temp_dir"
+gh run download --repo "$REPO" "$RUN_ID" --name apps --dir "$temp_dir"
 
 if [[ ! -d "$temp_dir" ]]; then
     echo "Error: Failed to download artifacts"

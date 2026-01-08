@@ -4,6 +4,7 @@ set -euo pipefail
 
 BRANCH="${1:-atmos}"
 OUTPUT_DIR="downloads"
+REPO="openaudible/ffmpeg-build"
 
 if ! command -v gh &> /dev/null; then
     echo "ERROR: gh CLI not found. Install from https://cli.github.com/"
@@ -17,7 +18,7 @@ fi
 
 echo "Triggering build on branch: $BRANCH"
 
-if ! gh workflow run build.yml --ref "$BRANCH" 2>&1; then
+if ! gh workflow run build.yml --repo "$REPO" --ref "$BRANCH" 2>&1; then
     echo "ERROR: Failed to trigger workflow"
     exit 1
 fi
@@ -25,11 +26,11 @@ fi
 echo "Waiting for workflow to start..."
 sleep 5
 
-RUN_ID=$(gh run list --workflow=build.yml --branch="$BRANCH" --limit 1 --json databaseId,status -q '.[0] | select(.status != "completed") | .databaseId')
+RUN_ID=$(gh run list --repo "$REPO" --workflow=build.yml --branch="$BRANCH" --limit 1 --json databaseId,status -q '.[0] | select(.status != "completed") | .databaseId')
 
 if [[ -z "$RUN_ID" ]]; then
     echo "ERROR: Could not find running workflow"
-    echo "Check manually: gh run list --workflow=build.yml --limit 5"
+    echo "Check manually: gh run list --repo "$REPO" --workflow=build.yml --limit 5"
     exit 1
 fi
 
@@ -41,7 +42,7 @@ echo
 
 previous_status=""
 while true; do
-    run_data=$(gh run view "$RUN_ID" --json status,conclusion 2>/dev/null || echo '{}')
+    run_data=$(gh run view "$RUN_ID" --repo "$REPO" --json status,conclusion 2>/dev/null || echo '{}')
     status=$(echo "$run_data" | jq -r '.status // "unknown"')
 
     if [[ "$status" != "$previous_status" && "$status" != "queued" ]]; then
