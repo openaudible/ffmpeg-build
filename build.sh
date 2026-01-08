@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-BRANCH="${1:-atmos}"
+BRANCH="${1:-main}"
 OUTPUT_DIR="downloads"
 REPO="openaudible/ffmpeg-build"
 

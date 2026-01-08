@@ -5,7 +5,7 @@ REPO="openaudible/ffmpeg-build"
 set -euo pipefail
 
 WORKFLOW_FILE="build.yml"
-BRANCH="${1:-atmos}"
+BRANCH="${1:-main}"
 
 echo "Triggering GitHub Actions workflow..."
 echo "  Workflow: $WORKFLOW_FILE"
