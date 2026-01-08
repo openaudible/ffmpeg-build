@@ -4,6 +4,7 @@ artifacts/
 builds/
 build_*
 bin/
+downloads/
 
 # FFmpeg source directories
 ffmpeg-*/
