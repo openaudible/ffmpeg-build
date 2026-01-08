@@ -15,22 +15,30 @@ fi
 
 case $ARCH in
     x86_64)
+        HOST_TRIPLET=""
+        CROSS_PREFIX=""
         ;;
     i686)
+        HOST_TRIPLET=""
+        CROSS_PREFIX=""
         FFMPEG_CONFIGURE_FLAGS+=(--cc="gcc -m32")
         ;;
     arm64)
+        HOST_TRIPLET="aarch64-linux-gnu"
+        CROSS_PREFIX="aarch64-linux-gnu-"
         FFMPEG_CONFIGURE_FLAGS+=(
             --enable-cross-compile
-            --cross-prefix=aarch64-linux-gnu-
+            --cross-prefix=$CROSS_PREFIX
             --target-os=linux
             --arch=aarch64
         )
         ;;
     arm*)
+        HOST_TRIPLET="arm-linux-gnueabihf"
+        CROSS_PREFIX="arm-linux-gnueabihf-"
         FFMPEG_CONFIGURE_FLAGS+=(
             --enable-cross-compile
-            --cross-prefix=arm-linux-gnueabihf-
+            --cross-prefix=$CROSS_PREFIX
             --target-os=linux
             --arch=arm
         )
@@ -91,18 +99,26 @@ FFMPEG_CONFIGURE_FLAGS+=(--extra-ldflags="-L$PREFIX/lib")
 do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame lame_svn
   cd lame_svn
     echo "Compiling lame: prefix $PREFIX"
-    CFLAGS="-lm" ./configure --enable-nasm --disable-decoder --prefix=$PREFIX --enable-static --disable-shared --disable-frontend
+    if [ -n "$HOST_TRIPLET" ]; then
+        CFLAGS="-lm" ./configure --host=$HOST_TRIPLET --enable-nasm --disable-decoder --prefix=$PREFIX --enable-static --disable-shared --disable-frontend
+    else
+        CFLAGS="-lm" ./configure --enable-nasm --disable-decoder --prefix=$PREFIX --enable-static --disable-shared --disable-frontend
+    fi
     make -j8
     make install
   cd ..
 echo "compiled LAME... " 
 
 
- # build zlib.  this is only working on x86_64
+ # build zlib
 
   extract_zlib
   cd zlib-1.2.11
-  ./configure --prefix="$PREFIX"
+  if [ -n "$CROSS_PREFIX" ]; then
+      CC="${CROSS_PREFIX}gcc" AR="${CROSS_PREFIX}ar" RANLIB="${CROSS_PREFIX}ranlib" ./configure --prefix="$PREFIX"
+  else
+      ./configure --prefix="$PREFIX"
+  fi
   make
   make install
   cd ..
