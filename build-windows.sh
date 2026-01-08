@@ -7,10 +7,15 @@ BASE_DIR=$(pwd)
 
 source common.sh
 
-ARCH=x86_64
-host=x86_64-w64-mingw32
+: ${ARCH:=x86_64}
 
-: ${ARCH?}
+if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
+  host=aarch64-w64-mingw32
+  ARCH=aarch64
+else
+  host=x86_64-w64-mingw32
+  ARCH=x86_64
+fi
 
 OUTPUT_DIR=artifacts/ffmpeg-$FFMPEG_VERSION-audio-$ARCH-win
 set -e

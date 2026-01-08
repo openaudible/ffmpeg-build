@@ -27,17 +27,18 @@ jobs:
       - name: Build
         run: ./build-linux.sh
       - name: Archive production artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: ffmpeg-linux-${{ env.ARCH }}
           path: artifacts/
 
   package-windows:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         arch:
           - x86_64
+          - arm64
     env:
       ARCH: ${{ matrix.arch }}
     steps:
@@ -45,11 +46,21 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update -y && \
-          sudo apt-get install -y yasm mingw-w64 subversion libz-mingw-w64-dev
+          sudo apt-get install -y yasm nasm subversion wget gawk
+      - name: Install x86_64 compiler
+        if: env.ARCH == 'x86_64'
+        run: |
+          sudo apt-get update -y && \
+          sudo apt-get install -y mingw-w64 libz-mingw-w64-dev
+      - name: Install ARM64 compiler
+        if: env.ARCH == 'arm64'
+        run: |
+          sudo apt-get update -y && \
+          sudo apt-get install -y gcc-mingw-w64-aarch64-win32 g++-mingw-w64-aarch64-win32
       - name: Build
         run: ./build-windows.sh
       - name: Archive production artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: ffmpeg-windows-${{ env.ARCH }}
           path: artifacts/
@@ -71,7 +82,7 @@ jobs:
       - name: Build
         run: ./build-macos.sh
       - name: Archive artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: ffmpeg-${{ matrix.target }}
           path: artifacts/
@@ -83,7 +94,7 @@ jobs:
       - package-windows
       - package-macos
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           path: artifacts/
       - name: Make tarballs
@@ -98,18 +109,20 @@ jobs:
       
           mkdir apps
           mkdir apps/win_x86_64
+          mkdir apps/win_arm64
           mkdir apps/mac_x86_64
           mkdir apps/mac_arm64
           mkdir apps/linux_x86_64
 
           cp ./ffmpeg-windows-x86_64/ffmpeg-5.1.2-audio-x86_64-win/bin/ff* apps/win_x86_64/
+          cp ./ffmpeg-windows-arm64/ffmpeg-5.1.2-audio-aarch64-win/bin/ff* apps/win_arm64/
           cp ./ffmpeg-arm64-apple-macos11/ffmpeg-5.1.2-audio-arm64-apple-macos11/bin/ff* apps/mac_arm64/
           cp ./ffmpeg-x86_64-apple-macos10.9/ffmpeg-5.1.2-audio-x86_64-apple-macos10.9/bin/ff* apps/mac_x86_64/
           cp ./ffmpeg-linux-x86_64/ffmpeg-5.1.2-audio-x86_64-linux-gnu/bin/ff* apps/linux_x86_64
    
       # upload this so it is available to download in action artifacts.    
       - name: Archive artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: apps
           path: artifacts/apps
