@@ -63,7 +63,7 @@ while true; do
             echo "✓ Build complete!"
             echo
             echo "Binaries available in: $OUTPUT_DIR/"
-            for platform in linux_x86_64 win_x86_64 win_arm64 mac; do
+            for platform in linux_x86_64 linux_aarch64 win_x86_64 win_arm64 mac; do
                 if [[ -d "$OUTPUT_DIR/$platform" ]]; then
                     echo "  - $platform/"
                 fi

@@ -68,6 +68,7 @@ echo "Extracting binaries..."
 
 platforms=(
     "linux_x86_64"
+    "linux_aarch64"
     "win_x86_64"
     "win_arm64"
     "mac"
