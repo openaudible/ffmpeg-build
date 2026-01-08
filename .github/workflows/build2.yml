@@ -52,11 +52,12 @@ jobs:
         run: |
           sudo apt-get update -y && \
           sudo apt-get install -y mingw-w64 libz-mingw-w64-dev
-      - name: Install ARM64 compiler
+      - name: Install ARM64 compiler (llvm-mingw)
         if: env.ARCH == 'arm64'
         run: |
-          sudo apt-get update -y && \
-          sudo apt-get install -y gcc-mingw-w64-aarch64-win32 g++-mingw-w64-aarch64-win32
+          wget https://github.com/mstorsjo/llvm-mingw/releases/download/20231128/llvm-mingw-20231128-ucrt-ubuntu-20.04-x86_64.tar.xz
+          tar -xf llvm-mingw-20231128-ucrt-ubuntu-20.04-x86_64.tar.xz
+          echo "$PWD/llvm-mingw-20231128-ucrt-ubuntu-20.04-x86_64/bin" >> $GITHUB_PATH
       - name: Build
         run: ./build-windows.sh
       - name: Archive production artifacts
