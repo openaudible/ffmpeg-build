@@ -89,12 +89,37 @@ jobs:
           name: ffmpeg-${{ matrix.target }}
           path: artifacts/
 
+  package-macos-universal:
+    runs-on: macos-latest
+    needs: package-macos
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ffmpeg-*-apple-*
+          path: artifacts/
+      - name: Create universal binaries
+        run: |
+          mkdir -p universal/bin
+          for bin in ffmpeg ffprobe ffplay; do
+            x86_bin="artifacts/ffmpeg-x86_64-apple-macos10.9/ffmpeg-6.1-audio-x86_64-apple-macos10.9/bin/$bin"
+            arm_bin="artifacts/ffmpeg-arm64-apple-macos11/ffmpeg-6.1-audio-arm64-apple-macos11/bin/$bin"
+            if [ -f "$x86_bin" ] && [ -f "$arm_bin" ]; then
+              lipo -create "$x86_bin" "$arm_bin" -output "universal/bin/$bin"
+              echo "Created universal binary: $bin"
+            fi
+          done
+      - name: Archive universal artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ffmpeg-universal-macos
+          path: universal/
+
   release:
     runs-on: ubuntu-latest
     needs:
       - package-linux
       - package-windows
-      - package-macos
+      - package-macos-universal
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -108,19 +133,17 @@ jobs:
             name=$(basename $dir)
             tar czf release/$name.tar.gz -C $(dirname $dir) $name
           done
-      
+
           mkdir apps
           mkdir apps/win_x86_64
           mkdir apps/win_arm64
-          mkdir apps/mac_x86_64
-          mkdir apps/mac_arm64
+          mkdir apps/mac
           mkdir apps/linux_x86_64
 
           cp ./ffmpeg-windows-x86_64/ffmpeg-6.1-audio-x86_64-win/bin/ff* apps/win_x86_64/
           cp ./ffmpeg-windows-arm64/ffmpeg-6.1-audio-aarch64-win/bin/ff* apps/win_arm64/
-          cp ./ffmpeg-arm64-apple-macos11/ffmpeg-6.1-audio-arm64-apple-macos11/bin/ff* apps/mac_arm64/
-          cp ./ffmpeg-x86_64-apple-macos10.9/ffmpeg-6.1-audio-x86_64-apple-macos10.9/bin/ff* apps/mac_x86_64/
           cp ./ffmpeg-linux-x86_64/ffmpeg-6.1-audio-x86_64-linux-gnu/bin/ff* apps/linux_x86_64
+          cp ./ffmpeg-universal-macos/bin/ff* apps/mac/
    
       # upload this so it is available to download in action artifacts.    
       - name: Archive artifacts

@@ -70,8 +70,7 @@ platforms=(
     "linux_x86_64"
     "win_x86_64"
     "win_arm64"
-    "mac_x86_64"
-    "mac_arm64"
+    "mac"
 )
 
 for platform in "${platforms[@]}"; do

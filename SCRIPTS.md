@@ -35,7 +35,7 @@ Downloads compiled ffmpeg/ffprobe binaries from a completed build.
 
 - Default output: `downloads/`
 - Downloads only the `apps` artifact (binaries only, not full build)
-- Organizes by platform: linux_x86_64, win_x86_64, win_arm64, mac_x86_64, mac_arm64
+- Organizes by platform: linux_x86_64, win_x86_64, win_arm64, mac
 
 ### build-status.sh
 Minimal LLM-friendly status output (alerts on failure, shows path on success).
@@ -212,8 +212,7 @@ The workflow creates these artifacts:
   - `apps/linux_x86_64/ffmpeg`, `apps/linux_x86_64/ffprobe`
   - `apps/win_x86_64/ffmpeg.exe`, `apps/win_x86_64/ffprobe.exe`
   - `apps/win_arm64/ffmpeg.exe`, `apps/win_arm64/ffprobe.exe`
-  - `apps/mac_x86_64/ffmpeg`, `apps/mac_x86_64/ffprobe`
-  - `apps/mac_arm64/ffmpeg`, `apps/mac_arm64/ffprobe`
+  - `apps/mac/ffmpeg`, `apps/mac/ffprobe` (universal binary for x86_64 and arm64)
 
 - **Release tarballs** (only on version tags):
   - Published to GitHub Releases when pushing tags like `v6.1`

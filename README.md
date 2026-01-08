@@ -7,7 +7,7 @@ These binaries only include the codecs, filters, and muxers that are needed for 
 
 We add a small patch to allow additional metadata in m4a/m4b tags.  
 
-We produce binaries for Linux (x86_64), Mac (arm64 and x86_64), and Windows (x86_64).
+We produce binaries for Linux (x86_64), Mac (universal binary for arm64 and x86_64), and Windows (x86_64 and arm64).
 
 Thank you to AcousticID for their ffmpeg-build github actions. Incredible to build 4 static binaries for ffmpeg in under 6 minutes. 
 
@@ -18,14 +18,8 @@ Supported platforms:
   - Linux
       * `x86\_64-linux-gnu`
   - Windows
-      * `x86\_64-w64-mingw32`
+      * `x86_64-w64-mingw32`
+      * `arm64-w64-mingw32`
   - macOS
-      * `x86_64-apple-macos10.9` (macOS Mavericks and newer on Intel CPU)
-      * `arm64-apple-macos11` (macOS Big Sur and newer on Apple M1 CPU)
-
-      To build universal mac binary, this needs to be done manually (for now) on an arm mac: 
-```
-    mkdir -p mac
-    lipo -create ./mac_x86_64/ffmpeg ./mac_arm64/ffmpeg -output ./mac/ffmpeg
-    lipo -create ./mac_x86_64/ffprobe ./mac_arm64/ffprobe -output ./mac/ffprobe
-```
+      * Universal binary (supports both x86_64 and arm64 architectures)
+      * Compatible with macOS 10.9+ (Intel) and macOS 11+ (Apple Silicon)
