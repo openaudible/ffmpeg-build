@@ -115,11 +115,11 @@ jobs:
           mkdir apps/mac_arm64
           mkdir apps/linux_x86_64
 
-          cp ./ffmpeg-windows-x86_64/ffmpeg-5.1.2-audio-x86_64-win/bin/ff* apps/win_x86_64/
-          cp ./ffmpeg-windows-arm64/ffmpeg-5.1.2-audio-aarch64-win/bin/ff* apps/win_arm64/
-          cp ./ffmpeg-arm64-apple-macos11/ffmpeg-5.1.2-audio-arm64-apple-macos11/bin/ff* apps/mac_arm64/
-          cp ./ffmpeg-x86_64-apple-macos10.9/ffmpeg-5.1.2-audio-x86_64-apple-macos10.9/bin/ff* apps/mac_x86_64/
-          cp ./ffmpeg-linux-x86_64/ffmpeg-5.1.2-audio-x86_64-linux-gnu/bin/ff* apps/linux_x86_64
+          cp ./ffmpeg-windows-x86_64/ffmpeg-6.1-audio-x86_64-win/bin/ff* apps/win_x86_64/
+          cp ./ffmpeg-windows-arm64/ffmpeg-6.1-audio-aarch64-win/bin/ff* apps/win_arm64/
+          cp ./ffmpeg-arm64-apple-macos11/ffmpeg-6.1-audio-arm64-apple-macos11/bin/ff* apps/mac_arm64/
+          cp ./ffmpeg-x86_64-apple-macos10.9/ffmpeg-6.1-audio-x86_64-apple-macos10.9/bin/ff* apps/mac_x86_64/
+          cp ./ffmpeg-linux-x86_64/ffmpeg-6.1-audio-x86_64-linux-gnu/bin/ff* apps/linux_x86_64
    
       # upload this so it is available to download in action artifacts.    
       - name: Archive artifacts
