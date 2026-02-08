@@ -86,6 +86,6 @@ Modify `common.sh` to adjust:
 ## Notes
 
 - Binaries are stripped and statically linked
-- macOS builds require Xcode command-line tools
+- macOS builds universal binaries using github actions, running locally require Xcode command-line tools
 - Windows cross-compilation uses MinGW-w64
 - Linux builds use Docker for consistent environment
