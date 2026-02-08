@@ -1,42 +1,44 @@
-4049a4050,4052
-> 
-> 
-> 
-4083a4087,4117
-> 
->     // additional items supported by some 
->     mov_write_string_metadata(s, pb, "rldt",    "release_date"     , 1);
->     mov_write_string_metadata(s, pb, "\251nrt",    "narrated_by"     , 1);
->     mov_write_string_metadata(s, pb, "\251pub",    "publisher"     , 1);
->     mov_write_string_metadata(s, pb, "JSON",    "json64"     , 1);  // base64 encoded json
->     mov_write_string_metadata(s, pb, "CDEK",    "asin"     , 1);
->     mov_write_string_metadata(s, pb, "prID",    "product_id"     , 1);
->     mov_write_string_metadata(s, pb, "SRNM",    "series_name"     , 1);
->     mov_write_string_metadata(s, pb, "SRSQ",    "series_sequence"     , 1);
->     mov_write_string_metadata(s, pb, "SRLK",    "series_link"     , 1);
->     mov_write_string_metadata(s, pb, "\251WWW",    "WWW"     , 1);   // www link to 
->     mov_write_string_metadata(s, pb, "@PST",    "title_short"     , 1);
->     mov_write_string_metadata(s, pb, "LANG",    "language"     , 1);
-> 
->     if (1)  
->     {
->         const char * prefix="atom:";
->         // Allow insertion of additional meta data into apple itunes ilst atom/
->         // Only inserts meta (strings) if metadata in form of atom:xxxx
->         const AVDictionaryEntry *t = NULL;     
->         const char * fourcc_name;
->         while (t = av_dict_get(s->metadata, "", t, AV_DICT_IGNORE_SUFFIX)) {
->             fourcc_name = strstr(t->key, prefix);
->             if (!fourcc_name) continue;
->             fourcc_name += strlen(prefix);    // skip prefix
->             if (strlen(fourcc_name)==4)
->                 mov_write_string_metadata(s, pb, fourcc_name, t->key, 1);
->         }
->     }
-> 
-4085,4086c4119,4120
-<     mov_write_trkn_tag(pb, mov, s, 0); // track number
-<     mov_write_trkn_tag(pb, mov, s, 1); // disc number
----
->     mov_write_trkn_tag(pb, mov, s, 0); // "trkn" track number
->     mov_write_trkn_tag(pb, mov, s, 1); // "disc" number
+diff --git a/libavformat/movenc.c b/libavformat/movenc.c
+--- a/libavformat/movenc.c
++++ b/libavformat/movenc.c
+@@ -4221,9 +4221,38 @@ static int mov_write_ilst_tag(AVIOContext *pb, MOVMuxContext *mov,
+     mov_write_int8_metadata  (s, pb, "pgap",    "gapless_playback",1);
+     mov_write_int8_metadata  (s, pb, "cpil",    "compilation", 1);
+     mov_write_covr(pb, s);
+-    mov_write_trkn_tag(pb, mov, s, 0); // track number
+-    mov_write_trkn_tag(pb, mov, s, 1); // disc number
++    mov_write_trkn_tag(pb, mov, s, 0); // "trkn" track number
++    mov_write_trkn_tag(pb, mov, s, 1); // "disc" number
+     mov_write_tmpo_tag(pb, s);
++
++    // additional custom metadata tags
++    mov_write_string_metadata(s, pb, "rldt",    "release_date"     , 1);
++    mov_write_string_metadata(s, pb, "\251nrt", "narrated_by"      , 1);
++    mov_write_string_metadata(s, pb, "\251pub", "publisher"        , 1);
++    mov_write_string_metadata(s, pb, "JSON",    "json64"           , 1);
++    mov_write_string_metadata(s, pb, "CDEK",    "asin"             , 1);
++    mov_write_string_metadata(s, pb, "prID",    "product_id"       , 1);
++    mov_write_string_metadata(s, pb, "SRNM",    "series_name"      , 1);
++    mov_write_string_metadata(s, pb, "SRSQ",    "series_sequence"  , 1);
++    mov_write_string_metadata(s, pb, "SRLK",    "series_link"      , 1);
++    mov_write_string_metadata(s, pb, "\251WWW", "WWW"              , 1);
++    mov_write_string_metadata(s, pb, "@PST",    "title_short"      , 1);
++    mov_write_string_metadata(s, pb, "LANG",    "language"          , 1);
++
++    // Allow arbitrary metadata via atom:XXXX prefix
++    {
++        const char *prefix = "atom:";
++        const AVDictionaryEntry *t = NULL;
++        const char *fourcc_name;
++        while ((t = av_dict_get(s->metadata, "", t, AV_DICT_IGNORE_SUFFIX))) {
++            fourcc_name = strstr(t->key, prefix);
++            if (!fourcc_name) continue;
++            fourcc_name += strlen(prefix);
++            if (strlen(fourcc_name) == 4)
++                mov_write_string_metadata(s, pb, fourcc_name, t->key, 1);
++        }
++    }
++
+     return update_size(pb, pos);
+ }
+

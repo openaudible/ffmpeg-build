@@ -3,7 +3,7 @@ set -e
 echo "Installing patches at `pwd`"
 
 echo "Applying metadata patch to movenc.c..."
-patch libavformat/movenc.c < patch.diff
+patch -p1 < patch.diff
 echo "✓ Metadata patch applied"
 
 echo "Applying AC-4 decoder patch..."

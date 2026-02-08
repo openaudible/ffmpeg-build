@@ -32,6 +32,18 @@ linux_runner/
 *.tar.gz
 *.tgz
 
+# IDE and tool configs
+.claude/
+.vscode/
+
+# Patch artifacts
+*.orig
+*.rej
+libavformat/
+
+# Debug build logs
+wdebug.txt
+
 # Unused/legacy files
 unused/
 
