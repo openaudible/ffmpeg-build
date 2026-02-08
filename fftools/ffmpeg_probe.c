@@ -22,6 +22,8 @@
 #include "libavutil/channel_layout.h"
 #include "libavutil/dict.h"
 #include "libavutil/opt.h"
+#include "libavutil/pixdesc.h"
+#include "libavutil/display.h"
 
 /* Forward declaration (called from ffmpeg.c) */
 int ffmpeg_probe_json(const char *filename);
@@ -72,13 +74,12 @@ static void json_print_time(FILE *f, const char *key,
                              int indent, int *first)
 {
     if (ts == AV_NOPTS_VALUE) {
-        json_print_str(f, key, "N/A", indent, first);
-    } else {
-        char buf[64];
-        double d = ts * av_q2d(*tb);
-        snprintf(buf, sizeof(buf), "%f", d);
-        json_print_str(f, key, buf, indent, first);
+        return;  /* Skip printing if not available */
     }
+    char buf[64];
+    double d = ts * av_q2d(*tb);
+    snprintf(buf, sizeof(buf), "%f", d);
+    json_print_str(f, key, buf, indent, first);
 }
 
 /* Print a duration time (0 means N/A) */
@@ -87,13 +88,12 @@ static void json_print_duration(FILE *f, const char *key,
                                 int indent, int *first)
 {
     if (ts == 0) {
-        json_print_str(f, key, "N/A", indent, first);
-    } else {
-        char buf[64];
-        double d = ts * av_q2d(*tb);
-        snprintf(buf, sizeof(buf), "%f", d);
-        json_print_str(f, key, buf, indent, first);
+        return;  /* Skip printing if not available */
     }
+    char buf[64];
+    double d = ts * av_q2d(*tb);
+    snprintf(buf, sizeof(buf), "%f", d);
+    json_print_str(f, key, buf, indent, first);
 }
 
 /* Print a timestamp as an integer (matches ffprobe: integer or "N/A") */
@@ -101,9 +101,8 @@ static void json_print_ts(FILE *f, const char *key, int64_t ts,
                            int indent, int *first)
 {
     if (ts == AV_NOPTS_VALUE)
-        json_print_str(f, key, "N/A", indent, first);
-    else
-        json_print_int(f, key, ts, indent, first);
+        return;  /* Skip printing if not available */
+    json_print_int(f, key, ts, indent, first);
 }
 
 /* Print tags object */
@@ -183,25 +182,23 @@ static void json_print_stream(FILE *f, AVFormatContext *fmt_ctx,
     cd = avcodec_descriptor_get(par->codec_id);
     if (cd) {
         json_print_str(f, "codec_name", cd->name, indent, &first);
-        json_print_str(f, "codec_long_name",
-                       cd->long_name ? cd->long_name : "unknown",
-                       indent, &first);
-    } else {
-        json_print_str(f, "codec_name", "unknown", indent, &first);
-        json_print_str(f, "codec_long_name", "unknown", indent, &first);
+        if (cd->long_name) {
+            json_print_str(f, "codec_long_name", cd->long_name, indent, &first);
+        }
     }
 
     profile = avcodec_profile_name(par->codec_id, par->profile);
-    if (profile)
+    if (profile) {
         json_print_str(f, "profile", profile, indent, &first);
-    else if (par->profile != AV_PROFILE_UNKNOWN) {
+    } else if (par->profile != AV_PROFILE_UNKNOWN) {
         snprintf(val_str, sizeof(val_str), "%d", par->profile);
         json_print_str(f, "profile", val_str, indent, &first);
-    } else
-        json_print_str(f, "profile", "unknown", indent, &first);
+    }
 
     s = av_get_media_type_string(par->codec_type);
-    json_print_str(f, "codec_type", s ? s : "unknown", indent, &first);
+    if (s) {
+        json_print_str(f, "codec_type", s, indent, &first);
+    }
 
     json_print_str(f, "codec_tag_string", av_fourcc2str(par->codec_tag),
                    indent, &first);
@@ -209,9 +206,87 @@ static void json_print_stream(FILE *f, AVFormatContext *fmt_ctx,
     json_print_str(f, "codec_tag", val_str, indent, &first);
 
     switch (par->codec_type) {
+    case AVMEDIA_TYPE_VIDEO: {
+        AVRational sar, dar;
+
+        json_print_int(f, "width", par->width, indent, &first);
+        json_print_int(f, "height", par->height, indent, &first);
+
+        /* Note: coded_width, coded_height, closed_captions, film_grain,
+           and refs require opening a decoder context, which we skip for simplicity */
+
+        json_print_int(f, "has_b_frames", par->video_delay, indent, &first);
+
+        /* Sample aspect ratio */
+        sar = av_guess_sample_aspect_ratio(fmt_ctx, stream, NULL);
+        if (sar.num) {
+            snprintf(val_str, sizeof(val_str), "%d:%d", sar.num, sar.den);
+            json_print_str(f, "sample_aspect_ratio", val_str, indent, &first);
+
+            /* Display aspect ratio */
+            av_reduce(&dar.num, &dar.den,
+                     par->width * sar.num,
+                     par->height * sar.den,
+                     1024*1024);
+            snprintf(val_str, sizeof(val_str), "%d:%d", dar.num, dar.den);
+            json_print_str(f, "display_aspect_ratio", val_str, indent, &first);
+        }
+
+        /* Pixel format */
+        s = av_get_pix_fmt_name(par->format);
+        if (s) {
+            json_print_str(f, "pix_fmt", s, indent, &first);
+        }
+
+        json_print_int(f, "level", par->level, indent, &first);
+
+        /* Color info */
+        s = av_color_range_name(par->color_range);
+        if (s && par->color_range != AVCOL_RANGE_UNSPECIFIED) {
+            json_print_str(f, "color_range", s, indent, &first);
+        }
+
+        s = av_color_space_name(par->color_space);
+        if (s && par->color_space != AVCOL_SPC_UNSPECIFIED) {
+            json_print_str(f, "color_space", s, indent, &first);
+        }
+
+        s = av_color_transfer_name(par->color_trc);
+        if (s && par->color_trc != AVCOL_TRC_UNSPECIFIED) {
+            json_print_str(f, "color_transfer", s, indent, &first);
+        }
+
+        s = av_color_primaries_name(par->color_primaries);
+        if (s && par->color_primaries != AVCOL_PRI_UNSPECIFIED) {
+            json_print_str(f, "color_primaries", s, indent, &first);
+        }
+
+        s = av_chroma_location_name(par->chroma_location);
+        if (s && par->chroma_location != AVCHROMA_LOC_UNSPECIFIED) {
+            json_print_str(f, "chroma_location", s, indent, &first);
+        }
+
+        /* Field order */
+        if (par->field_order == AV_FIELD_PROGRESSIVE) {
+            json_print_str(f, "field_order", "progressive", indent, &first);
+        } else if (par->field_order == AV_FIELD_TT) {
+            json_print_str(f, "field_order", "tt", indent, &first);
+        } else if (par->field_order == AV_FIELD_BB) {
+            json_print_str(f, "field_order", "bb", indent, &first);
+        } else if (par->field_order == AV_FIELD_TB) {
+            json_print_str(f, "field_order", "tb", indent, &first);
+        } else if (par->field_order == AV_FIELD_BT) {
+            json_print_str(f, "field_order", "bt", indent, &first);
+        }
+
+        break;
+    }
+
     case AVMEDIA_TYPE_AUDIO:
         s = av_get_sample_fmt_name(par->format);
-        json_print_str(f, "sample_fmt", s ? s : "unknown", indent, &first);
+        if (s) {
+            json_print_str(f, "sample_fmt", s, indent, &first);
+        }
         snprintf(val_str, sizeof(val_str), "%d", par->sample_rate);
         json_print_str(f, "sample_rate", val_str, indent, &first);
         json_print_int(f, "channels", par->ch_layout.nb_channels,
@@ -220,8 +295,6 @@ static void json_print_stream(FILE *f, AVFormatContext *fmt_ctx,
             av_channel_layout_describe(&par->ch_layout,
                                        val_str, sizeof(val_str));
             json_print_str(f, "channel_layout", val_str, indent, &first);
-        } else {
-            json_print_str(f, "channel_layout", "unknown", indent, &first);
         }
         json_print_int(f, "bits_per_sample",
                        av_get_bits_per_sample(par->codec_id),
@@ -238,8 +311,6 @@ static void json_print_stream(FILE *f, AVFormatContext *fmt_ctx,
     if (fmt_ctx->iformat->flags & AVFMT_SHOW_IDS) {
         snprintf(val_str, sizeof(val_str), "0x%x", stream->id);
         json_print_str(f, "id", val_str, indent, &first);
-    } else {
-        json_print_str(f, "id", "N/A", indent, &first);
     }
 
     snprintf(val_str, sizeof(val_str), "%d/%d",
@@ -264,22 +335,12 @@ static void json_print_stream(FILE *f, AVFormatContext *fmt_ctx,
     if (par->bit_rate > 0) {
         snprintf(val_str, sizeof(val_str), "%"PRId64, par->bit_rate);
         json_print_str(f, "bit_rate", val_str, indent, &first);
-    } else {
-        json_print_str(f, "bit_rate", "N/A", indent, &first);
     }
-
-    json_print_str(f, "max_bit_rate", "N/A", indent, &first);
-    json_print_str(f, "bits_per_raw_sample", "N/A", indent, &first);
 
     if (stream->nb_frames) {
         snprintf(val_str, sizeof(val_str), "%"PRId64, stream->nb_frames);
         json_print_str(f, "nb_frames", val_str, indent, &first);
-    } else {
-        json_print_str(f, "nb_frames", "N/A", indent, &first);
     }
-
-    json_print_str(f, "nb_read_frames", "N/A", indent, &first);
-    json_print_str(f, "nb_read_packets", "N/A", indent, &first);
 
     if (par->extradata_size > 0)
         json_print_int(f, "extradata_size", par->extradata_size,
@@ -376,10 +437,10 @@ int ffmpeg_probe_json(const char *filename)
         json_print_int(f, "nb_streams", fmt_ctx->nb_streams, 8, &first);
         json_print_int(f, "nb_programs", fmt_ctx->nb_programs, 8, &first);
         json_print_str(f, "format_name", fmt_ctx->iformat->name, 8, &first);
-        json_print_str(f, "format_long_name",
-                       fmt_ctx->iformat->long_name
-                           ? fmt_ctx->iformat->long_name : "unknown",
-                       8, &first);
+        if (fmt_ctx->iformat->long_name) {
+            json_print_str(f, "format_long_name", fmt_ctx->iformat->long_name,
+                           8, &first);
+        }
         json_print_time(f, "start_time", fmt_ctx->start_time,
                         &AV_TIME_BASE_Q, 8, &first);
         json_print_time(f, "duration", fmt_ctx->duration,
@@ -389,15 +450,11 @@ int ffmpeg_probe_json(const char *filename)
         if (size >= 0) {
             snprintf(val_str, sizeof(val_str), "%"PRId64, size);
             json_print_str(f, "size", val_str, 8, &first);
-        } else {
-            json_print_str(f, "size", "N/A", 8, &first);
         }
 
         if (fmt_ctx->bit_rate > 0) {
             snprintf(val_str, sizeof(val_str), "%"PRId64, fmt_ctx->bit_rate);
             json_print_str(f, "bit_rate", val_str, 8, &first);
-        } else {
-            json_print_str(f, "bit_rate", "N/A", 8, &first);
         }
 
         json_print_int(f, "probe_score", fmt_ctx->probe_score, 8, &first);
