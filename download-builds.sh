@@ -87,6 +87,10 @@ for platform in "${platforms[@]}"; do
 done
 
 echo
+echo "Making binaries executable..."
+find "$OUTPUT_DIR" -type f \( -name "ffmpeg" -o -name "ffprobe" -o -name "ffmpeg.exe" -o -name "ffprobe.exe" \) -exec chmod +x {} \;
+
+echo
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "✓ Download complete!"
 echo
