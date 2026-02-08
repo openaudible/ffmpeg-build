@@ -1,0 +1,36 @@
+diff --git a/fftools/ffmpeg.c b/fftools/ffmpeg.c
+--- a/fftools/ffmpeg.c
++++ b/fftools/ffmpeg.c
+@@ -1289,12 +1289,21 @@
+ #endif
+ }
+
++/* built-in probe mode: ffmpeg -probe <input> */
++extern int ffmpeg_probe_json(const char *filename);
++
+ int main(int argc, char **argv)
+ {
+     int ret, err_rate_exceeded;
+     BenchmarkTimeStamps ti;
+
+     init_dynload();
++
++    /* Check for -probe flag before any other processing */
++    if (argc >= 3 && strcmp(argv[1], "-probe") == 0) {
++        setvbuf(stderr, NULL, _IONBF, 0);
++        return ffmpeg_probe_json(argv[2]);
++    }
+
+     setvbuf(stderr,NULL,_IONBF,0); /* win32 runtime needs this */
+
+diff --git a/fftools/Makefile b/fftools/Makefile
+--- a/fftools/Makefile
++++ b/fftools/Makefile
+@@ -21,6 +21,7 @@
+     fftools/objpool.o           \
+     fftools/sync_queue.o        \
+     fftools/thread_queue.o      \
++    fftools/ffmpeg_probe.o      \
+
+ define DOFFTOOL
+ OBJS-$(1) += fftools/cmdutils.o fftools/opt_common.o fftools/$(1).o $(OBJS-$(1)-yes)
