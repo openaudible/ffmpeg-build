@@ -361,12 +361,18 @@ static void json_print_stream(FILE *f, AVFormatContext *fmt_ctx,
 int ffmpeg_probe_json(const char *filename)
 {
     AVFormatContext *fmt_ctx = NULL;
+    AVDictionary *format_opts = NULL;
     int err, i;
     FILE *f = stdout;
     int64_t size;
     char val_str[128];
 
-    err = avformat_open_input(&fmt_ctx, filename, NULL, NULL);
+    /* Set export_all to 1 to export all metadata tags */
+    av_dict_set(&format_opts, "export_all", "1", 0);
+
+    err = avformat_open_input(&fmt_ctx, filename, NULL, &format_opts);
+    av_dict_free(&format_opts);
+
     if (err < 0) {
         /* Print error in JSON format to match ffprobe -show_error */
         fprintf(f, "{\n");
