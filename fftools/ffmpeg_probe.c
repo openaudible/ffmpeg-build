@@ -30,6 +30,40 @@ int ffmpeg_probe_json(const char *filename);
 
 /* JSON output helpers */
 
+/* Convert [NNN] format back to unicode character in-place */
+static void normalize_metadata_key(char *key)
+{
+    char *src = key;
+    char *dst = key;
+
+    while (*src) {
+        if (*src == '[' && *(src + 1) >= '0' && *(src + 1) <= '9') {
+            /* Parse [NNN] format */
+            int val = 0;
+            char *end = src + 1;
+            while (*end >= '0' && *end <= '9') {
+                val = val * 10 + (*end - '0');
+                end++;
+            }
+            if (*end == ']' && val > 0 && val < 256) {
+                /* Valid [NNN] format - output as UTF-8 */
+                if (val < 0x80) {
+                    /* Single byte UTF-8 */
+                    *dst++ = (char)val;
+                } else {
+                    /* Two-byte UTF-8 for values 0x80-0xFF */
+                    *dst++ = (char)(0xC0 | (val >> 6));
+                    *dst++ = (char)(0x80 | (val & 0x3F));
+                }
+                src = end + 1;
+                continue;
+            }
+        }
+        *dst++ = *src++;
+    }
+    *dst = '\0';
+}
+
 static void json_escape(FILE *f, const char *s)
 {
     for (; *s; s++) {
@@ -114,9 +148,15 @@ static void json_print_tags(FILE *f, const AVDictionary *metadata,
 
     fprintf(f, ",\n%*s\"tags\": {", indent, "");
     while ((t = av_dict_get(metadata, "", t, AV_DICT_IGNORE_SUFFIX))) {
+        char key_buf[256];
         if (!first) fprintf(f, ",");
         fprintf(f, "\n%*s\"", indent + 4, "");
-        json_escape(f, t->key);
+
+        /* Normalize key to convert [NNN] format to unicode */
+        av_strlcpy(key_buf, t->key, sizeof(key_buf));
+        normalize_metadata_key(key_buf);
+        json_escape(f, key_buf);
+
         fputs("\": \"", f);
         json_escape(f, t->value);
         fputc('"', f);

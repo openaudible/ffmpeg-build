@@ -14,6 +14,17 @@ Custom FFmpeg builds optimized for audiobook processing. Produces static binarie
 ./build-windows.sh
 ```
 
+## Local Development
+
+**Use `build-linux.sh` (or platform-specific scripts) for local builds**, not `build.sh` which triggers GitHub Actions.
+
+The build process:
+- Creates temporary `build.XXXXXXXX/` directories for compilation
+- Automatically cleans up on successful completion
+- If interrupted (Ctrl+C), temporary directories may remain - clean up with: `rm -rf build.*`
+- Outputs binaries to `artifacts/ffmpeg-6.1-audio-<platform>/bin/`
+- Custom source files (like `fftools/ffmpeg_probe.c`) are automatically copied during build
+
 ## Platform Support
 
 - **Linux**: x86_64
