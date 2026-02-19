@@ -3,6 +3,8 @@
 artifacts/
 builds/
 build_*
+build-debug*
+build.*
 bin/
 downloads/
 

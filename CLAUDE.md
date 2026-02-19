@@ -25,6 +25,38 @@ The build process:
 - Outputs binaries to `artifacts/ffmpeg-6.1-audio-<platform>/bin/`
 - Custom source files (like `fftools/ffmpeg_probe.c`) are automatically copied during build
 
+### Debug Builds with Incremental Compilation
+
+For faster development iteration, use `debug.sh`:
+
+```bash
+# First build: extracts sources, applies patches, compiles everything
+./debug.sh
+
+# Edit source files in build-debug-x86_64/
+vim build-debug-x86_64/fftools/ffmpeg_probe.c
+
+# Incremental build: only recompiles changed files (much faster!)
+./debug.sh
+
+# Force clean rebuild
+rm -rf build-debug-*
+./debug.sh
+```
+
+**How it works:**
+- Uses fixed directory: `build-debug-${ARCH}` (not deleted after build)
+- First run: full extraction, patching, and compilation
+- Subsequent runs: skips extraction, make rebuilds only changed files
+- Output: debug symbols enabled, optimizations disabled, binary not stripped
+- Clean up: `./clean.sh` removes all build directories
+
+**Typical workflow:**
+1. Run `./debug.sh` once to create build environment
+2. Edit sources directly in `build-debug-x86_64/`
+3. Re-run `./debug.sh` for fast incremental compilation
+4. Debug binary appears in `artifacts/ffmpeg-6.1-audio-x86_64-linux-gnu/bin/`
+
 ## Platform Support
 
 - **Linux**: x86_64

@@ -29,5 +29,12 @@ if [[ -n "$temp_builds" ]]; then
     echo "$temp_builds" | xargs rm -rf
 fi
 
+# Remove fixed-name local build directories (debug builds, incremental builds, etc.)
+local_builds=$(find . -maxdepth 1 -type d \( -name "build-debug-*" -o -name "build-linux-*" \) 2>/dev/null || true)
+if [[ -n "$local_builds" ]]; then
+    echo "  Removing local build directories..."
+    echo "$local_builds" | xargs rm -rf
+fi
+
 echo "✓ Clean complete"
 

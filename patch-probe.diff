@@ -1,27 +1,26 @@
-diff --git a/fftools/ffmpeg.c b/fftools/ffmpeg.c
---- a/fftools/ffmpeg.c
-+++ b/fftools/ffmpeg.c
-@@ -1289,12 +1289,21 @@
- #endif
+diff --git a/fftools/ffmpeg_opt.c b/fftools/ffmpeg_opt.c
+--- a/fftools/ffmpeg_opt.c
++++ b/fftools/ffmpeg_opt.c
+@@ -1296,10 +1296,19 @@
+     return 0;
  }
 
 +/* built-in probe mode: ffmpeg -probe <input> */
 +extern int ffmpeg_probe_json(const char *filename);
 +
- int main(int argc, char **argv)
+ int ffmpeg_parse_options(int argc, char **argv)
  {
-     int ret, err_rate_exceeded;
-     BenchmarkTimeStamps ti;
-
-     init_dynload();
+     OptionParseContext octx;
+     const char *errmsg = NULL;
+     int ret;
 +
-+    /* Check for -probe flag before any other processing */
++    /* Check for -probe flag before parsing options */
++    /* At this point all initialization is done including UTF-8 conversion on Windows */
 +    if (argc >= 3 && strcmp(argv[1], "-probe") == 0) {
-+        setvbuf(stderr, NULL, _IONBF, 0);
 +        return ffmpeg_probe_json(argv[2]);
 +    }
 
-     setvbuf(stderr,NULL,_IONBF,0); /* win32 runtime needs this */
+     memset(&octx, 0, sizeof(octx));
 
 diff --git a/fftools/Makefile b/fftools/Makefile
 --- a/fftools/Makefile
