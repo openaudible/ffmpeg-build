@@ -69,7 +69,7 @@ time_ago() {
 if [[ "$status" != "completed" ]]; then
     echo "RUNNING: Build #$RUN_ID in progress"
     echo "CURRENT UTC: $current_utc"
-    echo "STARTED: $created_at ($(time_ago "$created_at"))"
+    echo "STARTED    :  $created_at ($(time_ago "$created_at"))"
     exit 2
 fi
 
@@ -81,15 +81,15 @@ if [[ "$conclusion" == "success" ]]; then
     if [[ "$artifact_exists" == "success" ]]; then
         echo "SUCCESS: Build #$RUN_ID completed"
         echo "CURRENT UTC: $current_utc"
-        echo "STARTED: $created_at ($(time_ago "$created_at"))"
-        echo "FINISHED: $updated_at ($(time_ago "$updated_at"))"
+        echo "STARTED    : $created_at ($(time_ago "$created_at"))"
+        echo "FINISHED   : $updated_at ($(time_ago "$updated_at"))"
         echo "PATH: $output_dir/"
         echo "DOWNLOAD: ./download-builds.sh $RUN_ID"
     else
         echo "SUCCESS: Build #$RUN_ID completed (artifacts not available)"
         echo "CURRENT UTC: $current_utc"
-        echo "STARTED: $created_at ($(time_ago "$created_at"))"
-        echo "FINISHED: $updated_at ($(time_ago "$updated_at"))"
+        echo "STARTED    : $created_at ($(time_ago "$created_at"))"
+        echo "FINISHED   : $updated_at ($(time_ago "$updated_at"))"
         echo "URL: $url"
     fi
     exit 0
