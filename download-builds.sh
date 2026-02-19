@@ -7,19 +7,30 @@ set -euo pipefail
 RUN_ID="${1:-}"
 OUTPUT_DIR="${2:-downloads}"
 
-if [[ -z "$RUN_ID" ]]; then
-    echo "Usage: $0 <run-id> [output-dir]"
-    echo
-    echo "Get recent run IDs with:"
-    echo "  gh run list --repo "$REPO" --workflow=build.yml --limit 10"
-    echo
-    echo "Default output directory: downloads/"
-    exit 1
-fi
-
 if ! command -v gh &> /dev/null; then
     echo "Error: 'gh' CLI not found. Install it from https://cli.github.com/"
     exit 1
+fi
+
+if [[ -z "$RUN_ID" ]]; then
+    echo "No run ID provided, fetching most recent successful build..."
+    echo
+    recent_run=$(gh run list --repo "$REPO" --workflow=build.yml --status=completed --limit 1 --json databaseId,conclusion -q '.[] | select(.conclusion == "success") | .databaseId' 2>/dev/null)
+    if [[ -n "$recent_run" ]]; then
+        RUN_ID="$recent_run"
+        echo "Using most recent successful build: #$RUN_ID"
+        echo
+    else
+        echo "Error: No recent successful runs found"
+        echo
+        echo "Usage: $0 <run-id> [output-dir]"
+        echo
+        echo "Get recent run IDs with:"
+        echo "  gh run list --repo "$REPO" --workflow=build.yml --limit 10"
+        echo
+        echo "Default output directory: downloads/"
+        exit 1
+    fi
 fi
 
 echo "Downloading builds from run #$RUN_ID"
