@@ -14,7 +14,7 @@ diff --git a/fftools/ffmpeg_opt.c b/fftools/ffmpeg_opt.c
      int ret;
 +
 +    if (argc >= 3 && strcmp(argv[1], "-probe") == 0) {
-+        return ffmpeg_probe_json(argv[2]);
++        exit(ffmpeg_probe_json(argv[2]));
 +    }
 
      memset(&octx, 0, sizeof(octx));
