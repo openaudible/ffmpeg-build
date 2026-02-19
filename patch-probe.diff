@@ -1,11 +1,10 @@
 diff --git a/fftools/ffmpeg_opt.c b/fftools/ffmpeg_opt.c
 --- a/fftools/ffmpeg_opt.c
 +++ b/fftools/ffmpeg_opt.c
-@@ -1296,10 +1296,19 @@
+@@ -1296,10 +1296,16 @@
      return 0;
  }
 
-+/* built-in probe mode: ffmpeg -probe <input> */
 +extern int ffmpeg_probe_json(const char *filename);
 +
  int ffmpeg_parse_options(int argc, char **argv)
@@ -14,8 +13,6 @@ diff --git a/fftools/ffmpeg_opt.c b/fftools/ffmpeg_opt.c
      const char *errmsg = NULL;
      int ret;
 +
-+    /* Check for -probe flag before parsing options */
-+    /* At this point all initialization is done including UTF-8 conversion on Windows */
 +    if (argc >= 3 && strcmp(argv[1], "-probe") == 0) {
 +        return ffmpeg_probe_json(argv[2]);
 +    }

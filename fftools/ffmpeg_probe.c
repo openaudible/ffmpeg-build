@@ -16,6 +16,11 @@
 #include <string.h>
 #include <inttypes.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <shellapi.h>
+#endif
+
 #include "libavformat/avformat.h"
 #include "libavcodec/avcodec.h"
 #include "libavutil/avstring.h"
@@ -402,10 +407,39 @@ int ffmpeg_probe_json(const char *filename)
 {
     AVFormatContext *fmt_ctx = NULL;
     AVDictionary *format_opts = NULL;
-    int err, i;
+    int err, i, ret;
     FILE *f = stdout;
     int64_t size;
     char val_str[128];
+#ifdef _WIN32
+    char *utf8_filename = NULL;
+#endif
+
+#ifdef _WIN32
+    /* On Windows, argv may still be in the ANSI codepage because
+     * prepare_app_arguments() hasn't been called yet when -probe
+     * intercepts early in ffmpeg_parse_options(). Get the true
+     * Unicode filename directly from the Windows API. */
+    {
+        int wargc;
+        wchar_t **wargv = CommandLineToArgvW(GetCommandLineW(), &wargc);
+        if (wargv) {
+            if (wargc >= 3) {
+                int bufsize = WideCharToMultiByte(CP_UTF8, 0, wargv[2], -1,
+                                                  NULL, 0, NULL, NULL);
+                if (bufsize > 0) {
+                    utf8_filename = av_malloc(bufsize);
+                    if (utf8_filename)
+                        WideCharToMultiByte(CP_UTF8, 0, wargv[2], -1,
+                                            utf8_filename, bufsize, NULL, NULL);
+                }
+            }
+            LocalFree(wargv);
+            if (utf8_filename)
+                filename = utf8_filename;
+        }
+    }
+#endif
 
     /* Set export_all to 1 to export all metadata tags */
     av_dict_set(&format_opts, "export_all", "1", 0);
@@ -421,7 +455,8 @@ int ffmpeg_probe_json(const char *filename)
         fprintf(f, "        \"string\": \"%s\"\n", av_err2str(err));
         fprintf(f, "    }\n");
         fprintf(f, "}\n");
-        return 1;
+        ret = 1;
+        goto done;
     }
 
     err = avformat_find_stream_info(fmt_ctx, NULL);
@@ -433,7 +468,8 @@ int ffmpeg_probe_json(const char *filename)
         fprintf(f, "    }\n");
         fprintf(f, "}\n");
         avformat_close_input(&fmt_ctx);
-        return 1;
+        ret = 1;
+        goto done;
     }
 
     fprintf(f, "{\n");
@@ -514,5 +550,11 @@ int ffmpeg_probe_json(const char *filename)
     fprintf(f, "\n}\n");
 
     avformat_close_input(&fmt_ctx);
-    return 0;
+    ret = 0;
+
+done:
+#ifdef _WIN32
+    av_free(utf8_filename);
+#endif
+    return ret;
 }
