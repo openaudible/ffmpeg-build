@@ -407,7 +407,7 @@ int ffmpeg_probe_json(const char *filename)
 {
     AVFormatContext *fmt_ctx = NULL;
     AVDictionary *format_opts = NULL;
-    int err, i, ret;
+    int err, i, ret = 1;  /* Default to error */
     FILE *f = stdout;
     int64_t size;
     char val_str[128];
@@ -550,7 +550,7 @@ int ffmpeg_probe_json(const char *filename)
     fprintf(f, "\n}\n");
 
     avformat_close_input(&fmt_ctx);
-    ret = 0;
+    ret = 0;  /* Success */
 
 done:
 #ifdef _WIN32
