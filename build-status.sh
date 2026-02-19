@@ -69,7 +69,7 @@ time_ago() {
 if [[ "$status" != "completed" ]]; then
     echo "RUNNING: Build #$RUN_ID in progress"
     echo "CURRENT UTC: $current_utc"
-    echo "STARTED    :  $created_at ($(time_ago "$created_at"))"
+    echo "STARTED    : $created_at ($(time_ago "$created_at"))"
     exit 2
 fi
 
