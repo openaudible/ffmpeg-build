@@ -29,15 +29,10 @@ case $ARCH in
         FFMPEG_CONFIGURE_FLAGS+=(--cc="gcc -m32")
         ;;
     arm64)
-        HOST_TRIPLET="aarch64-linux-musl"
-        CROSS_PREFIX="aarch64-linux-musl-"
-        MUSL_CC="${CROSS_PREFIX}gcc"
-        FFMPEG_CONFIGURE_FLAGS+=(
-            --enable-cross-compile
-            --cross-prefix=$CROSS_PREFIX
-            --target-os=linux
-            --arch=aarch64
-        )
+        HOST_TRIPLET=""
+        CROSS_PREFIX=""
+        MUSL_CC="musl-gcc"
+        FFMPEG_CONFIGURE_FLAGS+=(--cc="$MUSL_CC")
         FFMPEG_CONFIGURE_FLAGS+=(--extra-ldflags="-static")
         ;;
     arm*)

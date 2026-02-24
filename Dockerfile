@@ -15,15 +15,6 @@ RUN apt-get update -y && \
     patch \
     musl-tools
 
-# Download aarch64 musl cross-compiler for arm64 builds
-RUN if [ "$ARCH" = "arm64" ]; then \
-    wget -q https://musl.cc/aarch64-linux-musl-cross.tgz && \
-    tar -xf aarch64-linux-musl-cross.tgz -C /opt && \
-    rm aarch64-linux-musl-cross.tgz; \
-    fi
-
-ENV PATH="/opt/aarch64-linux-musl-cross/bin:${PATH}"
-
 WORKDIR /build
 COPY *.sh ./
 COPY *.diff ./
