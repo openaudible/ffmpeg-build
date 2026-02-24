@@ -12,6 +12,8 @@ if [[ -z "$RUN_ID" ]]; then
     echo
     echo "Get recent run IDs with:"
     echo "  gh run list --repo "$REPO" --workflow=build.yml --limit 10"
+    gh run list --repo openaudible/ffmpeg-build --workflow=build.yml --limit 10
+
     exit 1
 fi
 
