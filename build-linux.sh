@@ -13,10 +13,15 @@ if [ -z "${ARCH:-}" ]; then
 fi
 
 
+MUSL_CC=""
+
 case $ARCH in
     x86_64)
         HOST_TRIPLET=""
         CROSS_PREFIX=""
+        MUSL_CC="musl-gcc"
+        FFMPEG_CONFIGURE_FLAGS+=(--cc="$MUSL_CC")
+        FFMPEG_CONFIGURE_FLAGS+=(--extra-ldflags="-static")
         ;;
     i686)
         HOST_TRIPLET=""
@@ -24,14 +29,16 @@ case $ARCH in
         FFMPEG_CONFIGURE_FLAGS+=(--cc="gcc -m32")
         ;;
     arm64)
-        HOST_TRIPLET="aarch64-linux-gnu"
-        CROSS_PREFIX="aarch64-linux-gnu-"
+        HOST_TRIPLET="aarch64-linux-musl"
+        CROSS_PREFIX="aarch64-linux-musl-"
+        MUSL_CC="${CROSS_PREFIX}gcc"
         FFMPEG_CONFIGURE_FLAGS+=(
             --enable-cross-compile
             --cross-prefix=$CROSS_PREFIX
             --target-os=linux
             --arch=aarch64
         )
+        FFMPEG_CONFIGURE_FLAGS+=(--extra-ldflags="-static")
         ;;
     arm*)
         HOST_TRIPLET="arm-linux-gnueabihf"
@@ -73,6 +80,8 @@ case $ARCH in
         ;;
 esac
 
+BUILD_CC="${MUSL_CC:-${CROSS_PREFIX}gcc}"
+
 OUTPUT_DIR=artifacts/ffmpeg-$FFMPEG_VERSION-audio-$ARCH-linux-gnu
 
 BUILD_DIR=$(mktemp -d -p $(pwd) build.XXXXXXXX)
@@ -100,9 +109,9 @@ do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame lame_svn
   cd lame_svn
     echo "Compiling lame: prefix $PREFIX"
     if [ -n "$HOST_TRIPLET" ]; then
-        CFLAGS="-lm" ./configure --host=$HOST_TRIPLET --enable-nasm --disable-decoder --prefix=$PREFIX --enable-static --disable-shared --disable-frontend
+        CC="$BUILD_CC" CFLAGS="-lm" ./configure --host=$HOST_TRIPLET --enable-nasm --disable-decoder --prefix=$PREFIX --enable-static --disable-shared --disable-frontend
     else
-        CFLAGS="-lm" ./configure --enable-nasm --disable-decoder --prefix=$PREFIX --enable-static --disable-shared --disable-frontend
+        CC="$BUILD_CC" CFLAGS="-lm" ./configure --enable-nasm --disable-decoder --prefix=$PREFIX --enable-static --disable-shared --disable-frontend
     fi
     make -j8
     make install
@@ -114,11 +123,7 @@ echo "compiled LAME... "
 
   extract_zlib
   cd zlib-1.2.11
-  if [ -n "$CROSS_PREFIX" ]; then
-      CC="${CROSS_PREFIX}gcc" AR="${CROSS_PREFIX}ar" RANLIB="${CROSS_PREFIX}ranlib" ./configure --prefix="$PREFIX"
-  else
-      ./configure --prefix="$PREFIX"
-  fi
+  CC="$BUILD_CC" AR="${CROSS_PREFIX}ar" RANLIB="${CROSS_PREFIX}ranlib" ./configure --prefix="$PREFIX"
   make
   make install
   cd ..

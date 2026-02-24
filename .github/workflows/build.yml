@@ -7,7 +7,7 @@ on:
 
 jobs:
   package-linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         arch:
@@ -17,17 +17,12 @@ jobs:
       ARCH: ${{ matrix.arch }}
     steps:
       - uses: actions/checkout@v3
-      - name: Install dependencies
+      - name: Build in Docker (musl static binary)
         run: |
-          sudo apt-get update -y && \
-          sudo apt-get install -y yasm subversion nasm wget gawk
-      - name: Install ARM64 compiler
-        if: env.ARCH == 'arm64'
-        run: |
-          sudo apt-get update -y && \
-          sudo apt-get install -y gcc-aarch64-linux-gnu
-      - name: Build
-        run: ./build-linux.sh
+          docker build --build-arg ARCH=$ARCH -t ffmpeg-linux-$ARCH .
+          docker create --name ffmpeg-extract-$ARCH ffmpeg-linux-$ARCH
+          docker cp ffmpeg-extract-$ARCH:/build/artifacts/. artifacts/
+          docker rm ffmpeg-extract-$ARCH
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -35,7 +30,7 @@ jobs:
           path: artifacts/
 
   package-windows:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         arch:
