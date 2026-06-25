@@ -124,9 +124,29 @@ echo "compiled LAME... "
   cd ..
 
 
+# build libopus
+  extract_opus
+  cd opus-$OPUS_VERSION
+    echo "Compiling libopus: prefix $PREFIX"
+    if [ -n "$HOST_TRIPLET" ]; then
+        CC="$BUILD_CC" ./configure --host=$HOST_TRIPLET --prefix=$PREFIX --enable-static --disable-shared --disable-doc --disable-extra-programs
+    else
+        CC="$BUILD_CC" ./configure --prefix=$PREFIX --enable-static --disable-shared --disable-doc --disable-extra-programs
+    fi
+    make -j8
+    make install
+  cd ..
+echo "compiled libopus... "
+
 
 FFMPEG_CONFIGURE_FLAGS+=(--extra-cflags="-I$PREFIX/include")
 FFMPEG_CONFIGURE_FLAGS+=(--extra-ldflags="-L$PREFIX/lib")
+
+# ffmpeg locates libopus via pkg-config
+export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+FFMPEG_CONFIGURE_FLAGS+=(--pkg-config-flags=--static)
+
+add_compat_env "min_os=linux-any(musl-static,no-glibc),arch=$ARCH"
 
 echo "configure ffmpeg: ${FFMPEG_CONFIGURE_FLAGS[@]}"
 
@@ -144,5 +164,7 @@ chown $(stat -c '%u:%g' $BASE_DIR) -R $BASE_DIR/$OUTPUT_DIR
 
 
 find . $BASE_DIR/$OUTPUT_DIR | grep bin
+
+report_compatibility linux "$PREFIX/bin/ffmpeg" "min_os=linux-any(musl-static,no-glibc),arch=$ARCH"
 
 

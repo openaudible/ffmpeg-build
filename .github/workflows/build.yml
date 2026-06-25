@@ -26,7 +26,11 @@ jobs:
           docker cp ffmpeg-extract-$ARCH:/build/artifacts/. artifacts/
           docker rm ffmpeg-extract-$ARCH
       - name: Smoke test
-        run: artifacts/ffmpeg-6.1-audio-${{ env.ARCH }}-linux-gnu/bin/ffmpeg -version
+        run: |
+          BIN=artifacts/ffmpeg-6.1-audio-${{ env.ARCH }}-linux-gnu/bin/ffmpeg
+          "$BIN" -version
+          echo "Compatibility:"
+          "$BIN" -version | tr ' ' '\n' | grep OACOMPAT || true
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -108,6 +112,13 @@ jobs:
               echo "Created universal binary: $bin"
             fi
           done
+      - name: Compatibility report
+        run: |
+          BIN=universal/bin/ffmpeg
+          lipo -info "$BIN"
+          otool -l "$BIN" | grep -E -A3 'LC_VERSION_MIN_MACOSX|LC_BUILD_VERSION' \
+            | grep -E '(minos|version) '
+          "$BIN" -version | tr ' ' '\n' | grep OACOMPAT || true
       - name: Archive universal artifacts
         uses: actions/upload-artifact@v4
         with:

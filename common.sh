@@ -4,6 +4,10 @@ FFMPEG_VERSION=6.1
 FFMPEG_TARBALL=ffmpeg-$FFMPEG_VERSION.tar.xz
 FFMPEG_TARBALL_URL=http://ffmpeg.org/releases/$FFMPEG_TARBALL
 
+OPUS_VERSION=1.5.2
+OPUS_TARBALL=opus-$OPUS_VERSION.tar.gz
+OPUS_TARBALL_URL=https://github.com/xiph/opus/releases/download/v$OPUS_VERSION/$OPUS_TARBALL
+
 do_svn_checkout() {
   repo_url="$1"
   to_dir="$2"
@@ -30,6 +34,57 @@ extract_zlib()
   wget https://github.com/madler/zlib/archive/v1.2.11.tar.gz
   tar -xf v1.2.11.tar.gz
   rm v1.2.11.tar.gz
+}
+
+extract_opus()
+{
+  if [ ! -e $BASE_DIR/$OPUS_TARBALL ]; then
+    echo "curl get $OPUS_TARBALL_URL"
+    curl -s -L -o $BASE_DIR/$OPUS_TARBALL $OPUS_TARBALL_URL
+  fi
+  tar -xf $BASE_DIR/$OPUS_TARBALL
+}
+
+# Embed the runtime-compatibility floor into the binary. Every configure arg is
+# recorded in FFMPEG_CONFIGURATION, so this string is visible at runtime via
+# `ffmpeg -version` (grep for OACOMPAT=). Call before ./configure.
+add_compat_env() {
+  COMPAT_FLOOR="$1"
+  FFMPEG_CONFIGURE_FLAGS+=(--env=OACOMPAT="$COMPAT_FLOOR")
+}
+
+# Print and (where the host toolchain allows) verify the compatibility floor of
+# a freshly built binary. Call after `make install`.
+#   report_compatibility <platform> <binary-path> <floor-string>
+report_compatibility() {
+  _platform="$1"; _bin="$2"; _floor="$3"
+  echo ""
+  echo "================= Compatibility report ================="
+  echo "  binary : $_bin"
+  echo "  target : $_floor"
+  case "$_platform" in
+    linux)
+      file "$_bin" 2>/dev/null | sed 's/^/  file   : /'
+      if strings "$_bin" | grep -q GLIBC; then
+        echo "  glibc  : FAIL - GLIBC symbol versions present (breaks on older Linux)"
+      else
+        echo "  glibc  : OK - none present (musl static, runs on any Linux)"
+      fi
+      ;;
+    macos)
+      lipo -info "$_bin" 2>/dev/null | sed 's/^/  arch   : /'
+      otool -l "$_bin" 2>/dev/null \
+        | grep -E -A3 'LC_VERSION_MIN_MACOSX|LC_BUILD_VERSION' \
+        | grep -E '(minos|version) ' | head -2 | sed 's/^[[:space:]]*/  minos  : /'
+      ;;
+    windows)
+      echo "  imports: (should be system DLLs only - no libgcc/libstdc++/libwinpthread)"
+      ${CROSS_PREFIX:-}objdump -p "$_bin" 2>/dev/null \
+        | grep -i "DLL Name" | sed 's/^[[:space:]]*/    /'
+      ;;
+  esac
+  echo "  runtime: ffmpeg -version | tr ' ' '\\n' | grep OACOMPAT"
+  echo "========================================================"
 }
 
 extract_ffmpeg()
@@ -84,6 +139,7 @@ FFMPEG_CONFIGURE_FLAGS=(
 --disable-videotoolbox
 --enable-swscale
 --enable-libmp3lame
+--enable-libopus
 --enable-zlib
 --enable-protocol=file
 --enable-protocol=pipe
@@ -92,6 +148,7 @@ FFMPEG_CONFIGURE_FLAGS=(
 --enable-parser=aac
 --enable-parser=ac3
 --enable-parser=eac3
+--enable-parser=opus
 --enable-demuxer=ffmetadata
 --enable-demuxer=mjpeg_2000
 --enable-demuxer=image2
@@ -106,6 +163,7 @@ FFMPEG_CONFIGURE_FLAGS=(
 --enable-demuxer=ac3
 --enable-demuxer=eac3
 --enable-demuxer=truehd
+--enable-demuxer=ogg
 --enable-muxer=ffmetadata
 --enable-muxer=mp4
 --enable-muxer=mov
@@ -115,13 +173,17 @@ FFMPEG_CONFIGURE_FLAGS=(
 --enable-muxer=apng
 --enable-muxer=ipod
 --enable-muxer=image2
+--enable-muxer=ogg
+--enable-muxer=opus
 --enable-encoder=libmp3lame
+--enable-encoder=libopus
 --enable-encoder=aac
 --enable-encoder=ac3
 --enable-encoder=png
 --enable-encoder=mjpeg
 --enable-decoder=png
 --enable-decoder=mp3
+--enable-decoder=libopus
 --enable-decoder=aac
 --enable-decoder=mjpeg
 --enable-decoder=ac3

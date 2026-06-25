@@ -77,6 +77,28 @@ echo "compiled LAME... "
   cd ..
 
 
+# build libopus
+  extract_opus
+  cd opus-$OPUS_VERSION
+    echo "Compiling libopus: prefix $PREFIX"
+    CC="${CROSS_PREFIX}gcc" ./configure --host=$host --prefix=$PREFIX --enable-static --disable-shared --disable-doc --disable-extra-programs
+    make -j8
+    make install
+  cd ..
+echo "compiled libopus... "
+
+# ffmpeg locates libopus via pkg-config
+export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+FFMPEG_CONFIGURE_FLAGS+=(--pkg-config-flags=--static)
+
+if [ "$ARCH" = "aarch64" ]; then
+  COMPAT_FLOOR="min_os=windows10(arm64,ucrt,static)"
+else
+  COMPAT_FLOOR="min_os=windows7(x86_64,msvcrt,static)"
+fi
+add_compat_env "$COMPAT_FLOOR"
+
+
 echo "configure ffmpeg: ${FFMPEG_CONFIGURE_FLAGS[@]}"
 
 
@@ -85,3 +107,5 @@ make -j8
 make install
 
 chown $(stat -c '%u:%g' $BASE_DIR) -R $BASE_DIR/$OUTPUT_DIR
+
+report_compatibility windows "$PREFIX/bin/ffmpeg.exe" "$COMPAT_FLOOR"

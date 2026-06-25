@@ -76,6 +76,26 @@ do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame lame_svn
 echo "compiled LAME...$LAMEC "
 
 
+# build libopus
+  extract_opus
+  cd opus-$OPUS_VERSION
+    echo "Compiling libopus: prefix $PREFIX"
+    CC=/usr/bin/clang CFLAGS="-target $TARGET -I$PREFIX/include" LDFLAGS="-target $TARGET" \
+        ./configure --host=$host --prefix=$PREFIX --enable-static --disable-shared --disable-doc --disable-extra-programs
+    make -j8
+    make install
+    lipo -info $BASE_DIR/$OUTPUT_DIR/lib/libopus.a
+  cd ..
+echo "compiled libopus... "
+
+# ffmpeg locates libopus via pkg-config
+export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+FFMPEG_CONFIGURE_FLAGS+=(--pkg-config-flags=--static)
+
+COMPAT_FLOOR="min_os=${TARGET#*-apple-}($ARCH)"
+add_compat_env "$COMPAT_FLOOR"
+
+
 echo "configure ffmpeg: ${FFMPEG_CONFIGURE_FLAGS[@]}"
 
 
@@ -87,3 +107,5 @@ make -j8 #  V=1
 make install
 find $BASE_DIR/$OUTPUT_DIR | grep bin
 chown -R $(stat -f '%u:%g' $BASE_DIR) $BASE_DIR/$OUTPUT_DIR
+
+report_compatibility macos "$PREFIX/bin/ffmpeg" "$COMPAT_FLOOR"
