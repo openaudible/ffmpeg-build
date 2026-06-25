@@ -92,9 +92,12 @@ echo "compiled LAME... "
   cd ..
 echo "compiled libopus... "
 
-# ffmpeg locates libopus via pkg-config
+# ffmpeg locates libopus via pkg-config. Because --cross-prefix is set, FFmpeg's
+# configure looks for "${cross_prefix}pkg-config" (e.g. x86_64-w64-mingw32-pkg-config),
+# which doesn't exist, and silently falls back to "false" -> "opus not found".
+# Point it at the host pkg-config and at our prefix's .pc files.
 export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
-FFMPEG_CONFIGURE_FLAGS+=(--pkg-config-flags=--static)
+FFMPEG_CONFIGURE_FLAGS+=(--pkg-config=pkg-config --pkg-config-flags=--static)
 
 if [ "$ARCH" = "aarch64" ]; then
   COMPAT_FLOOR="min_os=windows10,arm64,ucrt,static"

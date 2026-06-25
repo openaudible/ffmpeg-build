@@ -58,7 +58,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update -y && \
-          sudo apt-get install -y yasm nasm subversion wget gawk
+          sudo apt-get install -y yasm nasm subversion wget gawk pkg-config
       - name: Install x86_64 compiler
         if: env.ARCH == 'x86_64'
         run: |
@@ -112,8 +112,8 @@ jobs:
         run: |
           mkdir -p universal/bin
           for bin in ffmpeg ffprobe ffplay; do
-            x86_bin=$(ls artifacts/ffmpeg-x86_64-apple-macos10.9/ffmpeg-*-audio-x86_64-apple-macos10.9/bin/$bin 2>/dev/null)
-            arm_bin=$(ls artifacts/ffmpeg-arm64-apple-macos11/ffmpeg-*-audio-arm64-apple-macos11/bin/$bin 2>/dev/null)
+            x86_bin=$(ls artifacts/ffmpeg-x86_64-apple-macos10.9/ffmpeg-*-audio-x86_64-apple-macos10.9/bin/$bin 2>/dev/null || true)
+            arm_bin=$(ls artifacts/ffmpeg-arm64-apple-macos11/ffmpeg-*-audio-arm64-apple-macos11/bin/$bin 2>/dev/null || true)
             if [ -f "$x86_bin" ] && [ -f "$arm_bin" ]; then
               lipo -create "$x86_bin" "$arm_bin" -output "universal/bin/$bin"
               echo "Created universal binary: $bin"
