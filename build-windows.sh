@@ -92,9 +92,9 @@ export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PAT
 FFMPEG_CONFIGURE_FLAGS+=(--pkg-config-flags=--static)
 
 if [ "$ARCH" = "aarch64" ]; then
-  COMPAT_FLOOR="min_os=windows10(arm64,ucrt,static)"
+  COMPAT_FLOOR="min_os=windows10,arm64,ucrt,static"
 else
-  COMPAT_FLOOR="min_os=windows7(x86_64,msvcrt,static)"
+  COMPAT_FLOOR="min_os=windows7,x86_64,msvcrt,static"
 fi
 add_compat_env "$COMPAT_FLOOR"
 

@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Changed
+- Upgraded FFmpeg to 8.0. Audiobook metadata/ftyp, embedded `-probe`, and the
+  AC-4 decoder patches were ported to the FFmpeg 8 codec/fftools APIs.
+
+### Fixed
+- `OACOMPAT`/compatibility-floor strings no longer contain parentheses, which
+  aborted FFmpeg's `configure` (`eval "export OACOMPAT=..."`) on every platform.
 
 ## [4.2.2-5] - 2020-02-19
 ### Changed
