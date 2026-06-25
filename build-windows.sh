@@ -44,7 +44,10 @@ FFMPEG_CONFIGURE_FLAGS+=(
     --arch=$ARCH
     --cross-prefix=$CROSS_PREFIX
     --extra-cflags="-static -static-libgcc -static-libstdc++ -I$PREFIX/include"
-
+    # FFmpeg 8's schannel TLS backend uses SECPKG_ATTR_DTLS_MTU, absent from the
+    # older mingw-w64 headers on the CI runner. We don't need TLS for local
+    # audiobook processing, so disable it rather than chase newer SDK headers.
+    --disable-schannel
 )
   
 # Build lame
@@ -86,7 +89,11 @@ echo "compiled LAME... "
     # (celt/arm/armcpu.c). Disable RTCD so it uses the compile-time feature set.
     OPUS_EXTRA=()
     if [ "$ARCH" = "aarch64" ]; then OPUS_EXTRA+=(--disable-rtcd); fi
-    CC="${CROSS_PREFIX}gcc" ./configure --host=$host --prefix=$PREFIX --enable-static --disable-shared --disable-doc --disable-extra-programs "${OPUS_EXTRA[@]}"
+    # Disable _FORTIFY_SOURCE: mingw's fortified memcpy emits __memcpy_chk, which
+    # is unresolved when ffmpeg statically links libopus.a (no ssp runtime), so
+    # ffmpeg's libopus link test fails with "opus not found using pkg-config".
+    CC="${CROSS_PREFIX}gcc" ./configure --host=$host --prefix=$PREFIX --enable-static --disable-shared --disable-doc --disable-extra-programs \
+        CFLAGS="-O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0" "${OPUS_EXTRA[@]}"
     make -j8
     make install
   cd ..
