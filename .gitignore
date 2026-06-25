@@ -49,3 +49,6 @@ wdebug.txt
 # Unused/legacy files
 unused/
 
+
+# Private local smoke tests (not part of the build)
+/tests/

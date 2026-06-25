@@ -81,7 +81,12 @@ echo "compiled LAME... "
   extract_opus
   cd opus-$OPUS_VERSION
     echo "Compiling libopus: prefix $PREFIX"
-    CC="${CROSS_PREFIX}gcc" ./configure --host=$host --prefix=$PREFIX --enable-static --disable-shared --disable-doc --disable-extra-programs
+    # opus enables ARM asm + runtime CPU detection by default, but it has no
+    # CPU-detection backend for the mingw/UCRT arm64 target and fails to build
+    # (celt/arm/armcpu.c). Disable RTCD so it uses the compile-time feature set.
+    OPUS_EXTRA=()
+    if [ "$ARCH" = "aarch64" ]; then OPUS_EXTRA+=(--disable-rtcd); fi
+    CC="${CROSS_PREFIX}gcc" ./configure --host=$host --prefix=$PREFIX --enable-static --disable-shared --disable-doc --disable-extra-programs "${OPUS_EXTRA[@]}"
     make -j8
     make install
   cd ..
