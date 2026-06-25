@@ -22,7 +22,7 @@ The build process:
 - Creates temporary `build.XXXXXXXX/` directories for compilation
 - Automatically cleans up on successful completion
 - If interrupted (Ctrl+C), temporary directories may remain - clean up with: `rm -rf build.*`
-- Outputs binaries to `artifacts/ffmpeg-6.1-audio-<platform>/bin/`
+- Outputs binaries to `artifacts/ffmpeg-8.0-audio-<platform>/bin/`
 - Custom source files (like `fftools/ffmpeg_probe.c`) are automatically copied during build
 
 ### Debug Builds with Incremental Compilation
@@ -77,7 +77,7 @@ Returns JSON metadata equivalent to `ffprobe -show_format -show_streams -print_f
 
 ### Custom Patches
 
-Three patches modify the upstream FFmpeg 6.1 source:
+Three patches modify the upstream FFmpeg 8.0 source:
 
 1. **patch-probe.diff** - Adds `-probe` flag to ffmpeg
    - Embeds ffprobe functionality directly into ffmpeg
@@ -101,6 +101,15 @@ Three patches modify the upstream FFmpeg 6.1 source:
 3. **patch-ac4.diff** - AC-4 audio decoder
    - Adds support for AC-4 (Dolby AC-4) audio codec
    - Used in some audiobook formats
+   - This is a backport of an out-of-tree decoder; upstream FFmpeg 8 only ships
+     the AC-4 *container* (raw muxer/demuxer), not a decoder. The decoder source
+     was ported to the FFmpeg 8 codec API: `avctx->channels` →
+     `ch_layout.nb_channels`, `frame->key_frame` → `AV_FRAME_FLAG_KEY`,
+     `avpriv_kbd_window_init` → `ff_kbd_window_init`, an explicit
+     `libavutil/mem.h` include, and a local `VLC_INIT_STATIC` shim (the macro
+     was removed in FFmpeg 7 but its primitives — `ff_vlc_init_sparse`,
+     `VLCElem`, `VLC_INIT_USE_STATIC` — remain). When bumping FFmpeg again,
+     re-check these against the new codec API.
 
 ## Build Configuration
 
@@ -225,10 +234,15 @@ Testing on a matrix of old/new Linux/Windows/macOS is painful, so each binary
 
    ```bash
    ffmpeg -version | tr ' ' '\n' | grep OACOMPAT
-   # e.g. OACOMPAT=min_os=linux-any(musl-static,no-glibc),arch=x86_64
-   #      OACOMPAT=min_os=windows7(x86_64,msvcrt,static)
-   #      OACOMPAT=min_os=macos10.9(x86_64)
+   # e.g. OACOMPAT=min_os=linux-any,musl-static,no-glibc,arch=x86_64
+   #      OACOMPAT=min_os=windows7,x86_64,msvcrt,static
+   #      OACOMPAT=min_os=macos10.9,arch=x86_64
    ```
+
+   Note: the floor string must use only shell-safe characters (no parentheses).
+   FFmpeg's `configure` runs `eval "export OACOMPAT=..."` on the `--env` value,
+   so a `(` in the string aborts configure with a syntax error. Keep the
+   comma/`=`-delimited form above.
 
 2. **Reported and verified at build time.** Each `build-*.sh` calls
    `report_compatibility` (in `common.sh`) after install, printing the target

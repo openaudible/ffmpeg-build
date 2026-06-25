@@ -146,7 +146,7 @@ FFMPEG_CONFIGURE_FLAGS+=(--extra-ldflags="-L$PREFIX/lib")
 export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
 FFMPEG_CONFIGURE_FLAGS+=(--pkg-config-flags=--static)
 
-add_compat_env "min_os=linux-any(musl-static,no-glibc),arch=$ARCH"
+add_compat_env "min_os=linux-any,musl-static,no-glibc,arch=$ARCH"
 
 echo "configure ffmpeg: ${FFMPEG_CONFIGURE_FLAGS[@]}"
 
@@ -165,6 +165,6 @@ chown $(stat -c '%u:%g' $BASE_DIR) -R $BASE_DIR/$OUTPUT_DIR
 
 find . $BASE_DIR/$OUTPUT_DIR | grep bin
 
-report_compatibility linux "$PREFIX/bin/ffmpeg" "min_os=linux-any(musl-static,no-glibc),arch=$ARCH"
+report_compatibility linux "$PREFIX/bin/ffmpeg" "min_os=linux-any,musl-static,no-glibc,arch=$ARCH"
 
 

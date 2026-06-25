@@ -27,10 +27,17 @@ jobs:
           docker rm ffmpeg-extract-$ARCH
       - name: Smoke test
         run: |
-          BIN=artifacts/ffmpeg-6.1-audio-${{ env.ARCH }}-linux-gnu/bin/ffmpeg
+          BIN=$(ls artifacts/ffmpeg-*-audio-${ARCH}-linux-gnu/bin/ffmpeg)
           "$BIN" -version
           echo "Compatibility:"
           "$BIN" -version | tr ' ' '\n' | grep OACOMPAT || true
+          echo "Probe test:"
+          python3 -c "import wave,struct,math; w=wave.open('tone.wav','w'); w.setnchannels(1); w.setsampwidth(2); w.setframerate(44100); w.writeframes(b''.join(struct.pack('<h',int(8000*math.sin(2*math.pi*300*i/44100))) for i in range(44100))); w.close()"
+          "$BIN" -i tone.wav -c:a aac -f ipod -metadata narrated_by="CI Test" out.m4b -y
+          "$BIN" -probe out.m4b | tee probe.json
+          grep -q '"format_name"' probe.json
+          grep -q "CI Test" probe.json
+          echo "Probe OK: -probe emitted JSON and custom audiobook tag round-tripped"
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -51,7 +58,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update -y && \
-          sudo apt-get install -y yasm nasm subversion wget gawk
+          sudo apt-get install -y yasm nasm subversion wget gawk pkg-config
       - name: Install x86_64 compiler
         if: env.ARCH == 'x86_64'
         run: |
@@ -105,8 +112,8 @@ jobs:
         run: |
           mkdir -p universal/bin
           for bin in ffmpeg ffprobe ffplay; do
-            x86_bin="artifacts/ffmpeg-x86_64-apple-macos10.9/ffmpeg-6.1-audio-x86_64-apple-macos10.9/bin/$bin"
-            arm_bin="artifacts/ffmpeg-arm64-apple-macos11/ffmpeg-6.1-audio-arm64-apple-macos11/bin/$bin"
+            x86_bin=$(ls artifacts/ffmpeg-x86_64-apple-macos10.9/ffmpeg-*-audio-x86_64-apple-macos10.9/bin/$bin 2>/dev/null || true)
+            arm_bin=$(ls artifacts/ffmpeg-arm64-apple-macos11/ffmpeg-*-audio-arm64-apple-macos11/bin/$bin 2>/dev/null || true)
             if [ -f "$x86_bin" ] && [ -f "$arm_bin" ]; then
               lipo -create "$x86_bin" "$arm_bin" -output "universal/bin/$bin"
               echo "Created universal binary: $bin"
@@ -152,10 +159,10 @@ jobs:
           mkdir apps/linux_x86_64
           mkdir apps/linux_aarch64
 
-          cp ./ffmpeg-windows-x86_64/ffmpeg-6.1-audio-x86_64-win/bin/ff* apps/win_x86_64/
-          cp ./ffmpeg-windows-arm64/ffmpeg-6.1-audio-aarch64-win/bin/ff* apps/win_arm64/
-          cp ./ffmpeg-linux-x86_64/ffmpeg-6.1-audio-x86_64-linux-gnu/bin/ff* apps/linux_x86_64
-          cp ./ffmpeg-linux-arm64/ffmpeg-6.1-audio-arm64-linux-gnu/bin/ff* apps/linux_aarch64
+          cp ./ffmpeg-windows-x86_64/ffmpeg-*-audio-x86_64-win/bin/ff* apps/win_x86_64/
+          cp ./ffmpeg-windows-arm64/ffmpeg-*-audio-aarch64-win/bin/ff* apps/win_arm64/
+          cp ./ffmpeg-linux-x86_64/ffmpeg-*-audio-x86_64-linux-gnu/bin/ff* apps/linux_x86_64
+          cp ./ffmpeg-linux-arm64/ffmpeg-*-audio-arm64-linux-gnu/bin/ff* apps/linux_aarch64
           cp ./ffmpeg-universal-macos/bin/ff* apps/mac/
    
       # upload this so it is available to download in action artifacts.    

@@ -92,7 +92,7 @@ echo "compiled libopus... "
 export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
 FFMPEG_CONFIGURE_FLAGS+=(--pkg-config-flags=--static)
 
-COMPAT_FLOOR="min_os=${TARGET#*-apple-}($ARCH)"
+COMPAT_FLOOR="min_os=${TARGET#*-apple-},arch=$ARCH"
 add_compat_env "$COMPAT_FLOOR"
 
 

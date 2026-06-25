@@ -1,32 +1,36 @@
+diff --git a/fftools/Makefile b/fftools/Makefile
+index b3c08ae..d663135 100644
+--- a/fftools/Makefile
++++ b/fftools/Makefile
+@@ -20,6 +20,7 @@ OBJS-ffmpeg +=                  \
+     fftools/ffmpeg_mux.o        \
+     fftools/ffmpeg_mux_init.o   \
+     fftools/ffmpeg_opt.o        \
++    fftools/ffmpeg_probe.o      \
+     fftools/ffmpeg_sched.o      \
+     fftools/graph/graphprint.o        \
+     fftools/sync_queue.o        \
 diff --git a/fftools/ffmpeg_opt.c b/fftools/ffmpeg_opt.c
+index d714a15..7d18aca 100644
 --- a/fftools/ffmpeg_opt.c
 +++ b/fftools/ffmpeg_opt.c
-@@ -1296,10 +1296,16 @@
+@@ -1377,6 +1377,8 @@ static int open_files(OptionGroupList *l, const char *inout, Scheduler *sch,
      return 0;
  }
-
+ 
 +extern int ffmpeg_probe_json(const char *filename);
 +
- int ffmpeg_parse_options(int argc, char **argv)
+ int ffmpeg_parse_options(int argc, char **argv, Scheduler *sch)
  {
-     OptionParseContext octx;
+     GlobalOptionsContext go = { .sch = sch };
+@@ -1384,6 +1386,10 @@ int ffmpeg_parse_options(int argc, char **argv, Scheduler *sch)
      const char *errmsg = NULL;
      int ret;
-+
+ 
 +    if (argc >= 3 && strcmp(argv[1], "-probe") == 0) {
 +        exit(ffmpeg_probe_json(argv[2]));
 +    }
-
++
      memset(&octx, 0, sizeof(octx));
-
-diff --git a/fftools/Makefile b/fftools/Makefile
---- a/fftools/Makefile
-+++ b/fftools/Makefile
-@@ -21,6 +21,7 @@
-     fftools/objpool.o           \
-     fftools/sync_queue.o        \
-     fftools/thread_queue.o      \
-+    fftools/ffmpeg_probe.o      \
-
- define DOFFTOOL
- OBJS-$(1) += fftools/cmdutils.o fftools/opt_common.o fftools/$(1).o $(OBJS-$(1)-yes)
+ 
+     /* split the commandline into an internal representation */
