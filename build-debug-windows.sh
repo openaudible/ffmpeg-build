@@ -57,9 +57,10 @@ FFMPEG_CONFIGURE_FLAGS+=(
 
 # Build lame with debug info
 echo "=== Building LAME (debug) ==="
-do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame lame_svn
+do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame lame_svn $LAME_SVN_REVISION
 cd lame_svn
-CFLAGS="$DEBUG_CFLAGS -Wno-incompatible-pointer-types" ./configure --disable-decoder --prefix=$PREFIX --enable-static --disable-shared --disable-frontend --host=$host
+# --disable-hardening: LAME's -fstack-clash-protection ICEs mingw-w64 gcc (see build-windows.sh)
+CFLAGS="$DEBUG_CFLAGS -Wno-incompatible-pointer-types" ./configure --disable-decoder --disable-hardening --prefix=$PREFIX --enable-static --disable-shared --disable-frontend --host=$host
 make -j$(nproc)
 make install
 cd ..
@@ -68,7 +69,7 @@ echo "LAME built with debug symbols"
 # Build zlib with debug info
 echo "=== Building zlib (debug) ==="
 extract_zlib
-cd zlib-1.2.11
+cd zlib-$ZLIB_VERSION
 make -f win32/Makefile.gcc CFLAGS="$DEBUG_CFLAGS" BINARY_PATH=$PREFIX/bin INCLUDE_PATH=$PREFIX/include LIBRARY_PATH=$PREFIX/lib SHARED_MODE=0 install
 cd ..
 echo "zlib built with debug symbols"

@@ -58,7 +58,7 @@ FFMPEG_CONFIGURE_FLAGS+=(
 # Build lame
 PREFIX=$BASE_DIR/$OUTPUT_DIR
 
-do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame lame_svn
+do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame lame_svn $LAME_SVN_REVISION
   cd lame_svn
   LAMEC="--enable-nasm --disable-decoder --disable-frontend --prefix=$PREFIX --enable-static --disable-shared --host=$host --enable-cross-compile --target=$TARGET"
   echo "*** ./configure $LAMEC"
@@ -92,7 +92,7 @@ echo "compiled libopus... "
 export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
 FFMPEG_CONFIGURE_FLAGS+=(--pkg-config-flags=--static)
 
-COMPAT_FLOOR="min_os=${TARGET#*-apple-}($ARCH)"
+COMPAT_FLOOR="min_os=${TARGET#*-apple-},arch=$ARCH"
 add_compat_env "$COMPAT_FLOOR"
 
 

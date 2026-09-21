@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
-# https://ffmpeg.org/releases/ffmpeg-6.1.tar.xz
-FFMPEG_VERSION=6.1
+# https://ffmpeg.org/releases/ffmpeg-8.0.tar.xz
+FFMPEG_VERSION=8.0
 FFMPEG_TARBALL=ffmpeg-$FFMPEG_VERSION.tar.xz
 FFMPEG_TARBALL_URL=http://ffmpeg.org/releases/$FFMPEG_TARBALL
+
+ZLIB_VERSION=1.3.1
+
+# Pin LAME to an exact SVN revision: trunk is a moving target and an unpinned
+# checkout silently swaps the mp3 encoder between builds.
+LAME_SVN_REVISION=6835
 
 OPUS_VERSION=1.5.2
 OPUS_TARBALL=opus-$OPUS_VERSION.tar.gz
@@ -11,13 +17,13 @@ OPUS_TARBALL_URL=https://github.com/xiph/opus/releases/download/v$OPUS_VERSION/$
 do_svn_checkout() {
   repo_url="$1"
   to_dir="$2"
-  desired_revision=""
+  desired_revision="$3"
   if [ ! -d $to_dir ]; then
     echo "svn checking out to $to_dir"
     if [[ -z "$desired_revision" ]]; then
       svn checkout -q $repo_url $to_dir.tmp  --non-interactive --trust-server-cert || exit 1
     else
-      svn checkout -q -r $desired_revision $repo_url $to_dir.tmp || exit 1
+      svn checkout -q -r $desired_revision $repo_url $to_dir.tmp --non-interactive --trust-server-cert || exit 1
     fi
     mv $to_dir.tmp $to_dir
   else
@@ -31,9 +37,9 @@ do_svn_checkout() {
 
 extract_zlib()
 {
-  wget https://github.com/madler/zlib/archive/v1.2.11.tar.gz
-  tar -xf v1.2.11.tar.gz
-  rm v1.2.11.tar.gz
+  wget https://github.com/madler/zlib/archive/v$ZLIB_VERSION.tar.gz
+  tar -xf v$ZLIB_VERSION.tar.gz
+  rm v$ZLIB_VERSION.tar.gz
 }
 
 extract_opus()

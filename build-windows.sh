@@ -44,15 +44,22 @@ FFMPEG_CONFIGURE_FLAGS+=(
     --arch=$ARCH
     --cross-prefix=$CROSS_PREFIX
     --extra-cflags="-static -static-libgcc -static-libstdc++ -I$PREFIX/include"
-
+    # FFmpeg 8's schannel TLS backend uses SECPKG_ATTR_DTLS_MTU, absent from the
+    # older mingw-w64 headers on the CI runner. We don't need TLS for local
+    # audiobook processing, so disable it rather than chase newer SDK headers.
+    --disable-schannel
 )
   
 # Build lame
 
-do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame lame_svn
+do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame lame_svn $LAME_SVN_REVISION
   cd lame_svn
     echo "Compiling lame: prefix $PREFIX"
-    ./configure --disable-decoder --prefix=$PREFIX --enable-static --disable-shared --host=$host
+    # LAME r6835 turns on security hardening by default. Its configure probe for
+    # -fstack-clash-protection succeeds on mingw-w64 gcc, but compiling real code
+    # with it ICEs (i386_pe_seh_unwind_emit / "open SEH entry at end of file").
+    # None of the hardening flags matter for a static lib we link into ffmpeg.
+    ./configure --disable-decoder --disable-hardening --prefix=$PREFIX --enable-static --disable-shared --host=$host
     make -j8
     make install
   cd ..
@@ -63,7 +70,7 @@ echo "compiled LAME... "
   PREFIXDIR="$PREFIX"
   echo "building zlib prefixdir=$PREFIXDIR CROSSPREFIX=$CROSS_PREFIX"
   extract_zlib
-  cd zlib-1.2.11
+  cd zlib-$ZLIB_VERSION
 
   if [ "$ARCH" = "aarch64" ]; then
     # Use configure for ARM64 (llvm-mingw compatibility)
@@ -81,20 +88,32 @@ echo "compiled LAME... "
   extract_opus
   cd opus-$OPUS_VERSION
     echo "Compiling libopus: prefix $PREFIX"
-    CC="${CROSS_PREFIX}gcc" ./configure --host=$host --prefix=$PREFIX --enable-static --disable-shared --disable-doc --disable-extra-programs
+    # opus enables ARM asm + runtime CPU detection by default, but it has no
+    # CPU-detection backend for the mingw/UCRT arm64 target and fails to build
+    # (celt/arm/armcpu.c). Disable RTCD so it uses the compile-time feature set.
+    OPUS_EXTRA=()
+    if [ "$ARCH" = "aarch64" ]; then OPUS_EXTRA+=(--disable-rtcd); fi
+    # Disable _FORTIFY_SOURCE: mingw's fortified memcpy emits __memcpy_chk, which
+    # is unresolved when ffmpeg statically links libopus.a (no ssp runtime), so
+    # ffmpeg's libopus link test fails with "opus not found using pkg-config".
+    CC="${CROSS_PREFIX}gcc" ./configure --host=$host --prefix=$PREFIX --enable-static --disable-shared --disable-doc --disable-extra-programs \
+        CFLAGS="-O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0" "${OPUS_EXTRA[@]}"
     make -j8
     make install
   cd ..
 echo "compiled libopus... "
 
-# ffmpeg locates libopus via pkg-config
+# ffmpeg locates libopus via pkg-config. Because --cross-prefix is set, FFmpeg's
+# configure looks for "${cross_prefix}pkg-config" (e.g. x86_64-w64-mingw32-pkg-config),
+# which doesn't exist, and silently falls back to "false" -> "opus not found".
+# Point it at the host pkg-config and at our prefix's .pc files.
 export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
-FFMPEG_CONFIGURE_FLAGS+=(--pkg-config-flags=--static)
+FFMPEG_CONFIGURE_FLAGS+=(--pkg-config=pkg-config --pkg-config-flags=--static)
 
 if [ "$ARCH" = "aarch64" ]; then
-  COMPAT_FLOOR="min_os=windows10(arm64,ucrt,static)"
+  COMPAT_FLOOR="min_os=windows10,arm64,ucrt,static"
 else
-  COMPAT_FLOOR="min_os=windows7(x86_64,msvcrt,static)"
+  COMPAT_FLOOR="min_os=windows7,x86_64,msvcrt,static"
 fi
 add_compat_env "$COMPAT_FLOOR"
 

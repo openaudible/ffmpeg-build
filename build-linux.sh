@@ -100,7 +100,7 @@ FFMPEG_CONFIGURE_FLAGS+=(--extra-ldflags="-L$PREFIX/lib")
 
 
 
-do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame lame_svn
+do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame lame_svn $LAME_SVN_REVISION
   cd lame_svn
     echo "Compiling lame: prefix $PREFIX"
     if [ -n "$HOST_TRIPLET" ]; then
@@ -117,7 +117,7 @@ echo "compiled LAME... "
  # build zlib
 
   extract_zlib
-  cd zlib-1.2.11
+  cd zlib-$ZLIB_VERSION
   CC="$BUILD_CC" AR="${CROSS_PREFIX}ar" RANLIB="${CROSS_PREFIX}ranlib" ./configure --prefix="$PREFIX"
   make
   make install
@@ -146,7 +146,7 @@ FFMPEG_CONFIGURE_FLAGS+=(--extra-ldflags="-L$PREFIX/lib")
 export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
 FFMPEG_CONFIGURE_FLAGS+=(--pkg-config-flags=--static)
 
-add_compat_env "min_os=linux-any(musl-static,no-glibc),arch=$ARCH"
+add_compat_env "min_os=linux-any,musl-static,no-glibc,arch=$ARCH"
 
 echo "configure ffmpeg: ${FFMPEG_CONFIGURE_FLAGS[@]}"
 
@@ -165,6 +165,6 @@ chown $(stat -c '%u:%g' $BASE_DIR) -R $BASE_DIR/$OUTPUT_DIR
 
 find . $BASE_DIR/$OUTPUT_DIR | grep bin
 
-report_compatibility linux "$PREFIX/bin/ffmpeg" "min_os=linux-any(musl-static,no-glibc),arch=$ARCH"
+report_compatibility linux "$PREFIX/bin/ffmpeg" "min_os=linux-any,musl-static,no-glibc,arch=$ARCH"
 
 

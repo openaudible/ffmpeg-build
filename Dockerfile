@@ -13,6 +13,7 @@ RUN apt-get update -y && \
     nasm \
     subversion \
     patch \
+    pkg-config \
     musl-tools
 
 WORKDIR /build
