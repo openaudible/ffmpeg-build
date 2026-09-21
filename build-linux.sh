@@ -100,7 +100,7 @@ FFMPEG_CONFIGURE_FLAGS+=(--extra-ldflags="-L$PREFIX/lib")
 
 
 
-do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame lame_svn
+do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame lame_svn $LAME_SVN_REVISION
   cd lame_svn
     echo "Compiling lame: prefix $PREFIX"
     if [ -n "$HOST_TRIPLET" ]; then
@@ -117,7 +117,7 @@ echo "compiled LAME... "
  # build zlib
 
   extract_zlib
-  cd zlib-1.2.11
+  cd zlib-$ZLIB_VERSION
   CC="$BUILD_CC" AR="${CROSS_PREFIX}ar" RANLIB="${CROSS_PREFIX}ranlib" ./configure --prefix="$PREFIX"
   make
   make install

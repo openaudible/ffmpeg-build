@@ -77,7 +77,7 @@ Returns JSON metadata equivalent to `ffprobe -show_format -show_streams -print_f
 
 ### Custom Patches
 
-Three patches modify the upstream FFmpeg 8.0 source:
+Four patches modify the upstream FFmpeg 8.0 source:
 
 1. **patch-probe.diff** - Adds `-probe` flag to ffmpeg
    - Embeds ffprobe functionality directly into ffmpeg
@@ -111,6 +111,17 @@ Three patches modify the upstream FFmpeg 8.0 source:
      `VLCElem`, `VLC_INIT_USE_STATIC` — remain). When bumping FFmpeg again,
      re-check these against the new codec API.
 
+4. **patch-aax.diff** - Decrypt only the `aavd` audio track in AAX/AAXC files
+   - Upstream `mov_read_packet` runs `aax_filter` (AES-CBC) on **every**
+     packet once `aax_mode` is set. In Audible files only the `aavd`-tagged
+     audio samples are encrypted; QuickTime chapter-image tracks (mjpeg
+     "timed thumbnails", e.g. picture-book titles) are plaintext, so
+     "decrypting" them produced garbage, every frame failed to decode, and
+     ffmpeg aborted with `Decode error rate 1 exceeds maximum 0.666667`
+     (exit 69) even though the audio had converted.
+   - Gates `aax_filter` on `codec_tag == 'aavd'`. Cover art and chapter
+     images now decode; audio is unchanged.
+
 ## Build Configuration
 
 - Minimal codec set: encode/decode mp3 (libmp3lame), aac, ac3, opus (libopus),
@@ -118,6 +129,11 @@ Three patches modify the upstream FFmpeg 8.0 source:
 - External libraries (libmp3lame, libopus, zlib) are built statically from
   source by each `build-*.sh` script before FFmpeg is configured. libopus is
   located via pkg-config (`PKG_CONFIG_PATH` + `--pkg-config-flags=--static`).
+- Every dependency version lives in `common.sh` and is pinned. LAME has no
+  release tarball, so it comes from SVN trunk at an exact revision
+  (`LAME_SVN_REVISION`); leaving it unpinned silently swaps the mp3 encoder
+  between builds and has produced large, unexplained encode-speed differences
+  between otherwise identical releases.
 - Static linking for portability
 - Optimized for audiobook processing
 - No video encoding (decode only for cover art)
@@ -127,6 +143,7 @@ Three patches modify the upstream FFmpeg 8.0 source:
 - `build.sh` - Main build script (orchestrates all platforms)
 - `build-*.sh` - Platform-specific build scripts
 - `patch.sh` - Applies all patches to FFmpeg source
+- `patch*.diff` - Metadata/ftyp, `-probe`, AC-4 decoder, AAX audio-only decryption
 - `fftools/ffmpeg_probe.c` - Probe mode implementation
 - `actions.sh` - GitHub Actions automation
 

@@ -6,6 +6,10 @@ echo "Applying metadata patch to movenc.c..."
 patch -p1 < patch.diff
 echo "✓ Metadata patch applied"
 
+echo "Applying AAX/AAXC audio-only decryption patch to mov.c..."
+patch -p1 < ../patch-aax.diff
+echo "✓ AAX decryption patch applied"
+
 echo "Applying AC-4 decoder patch..."
 patch -p1 < ../patch-ac4.diff
 echo "✓ AC-4 decoder patch applied"

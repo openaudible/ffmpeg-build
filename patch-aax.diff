@@ -1,0 +1,17 @@
+diff --git a/libavformat/mov.c b/libavformat/mov.c
+--- a/libavformat/mov.c
++++ b/libavformat/mov.c
+@@ -11222,7 +11222,12 @@
+     if (st->discard == AVDISCARD_ALL)
+         goto retry;
+ 
+-    if (mov->aax_mode)
++    /* OpenAudible: Audible only encrypts the 'aavd' audio samples. Other
++     * tracks in the same file (QuickTime chapter-image "timed thumbnails",
++     * text chapter tracks) are plaintext, and running the AES filter over
++     * them turned every frame into garbage, so ffmpeg aborted with
++     * "Decode error rate 1 exceeds maximum" after the audio had converted. */
++    if (mov->aax_mode && st->codecpar->codec_tag == MKTAG('a','a','v','d'))
+         aax_filter(pkt->data, pkt->size, mov);
+ 
+     ret = cenc_filter(mov, st, sc, pkt, current_index);

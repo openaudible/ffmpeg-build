@@ -52,7 +52,7 @@ FFMPEG_CONFIGURE_FLAGS+=(
   
 # Build lame
 
-do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame lame_svn
+do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame lame_svn $LAME_SVN_REVISION
   cd lame_svn
     echo "Compiling lame: prefix $PREFIX"
     ./configure --disable-decoder --prefix=$PREFIX --enable-static --disable-shared --host=$host
@@ -66,7 +66,7 @@ echo "compiled LAME... "
   PREFIXDIR="$PREFIX"
   echo "building zlib prefixdir=$PREFIXDIR CROSSPREFIX=$CROSS_PREFIX"
   extract_zlib
-  cd zlib-1.2.11
+  cd zlib-$ZLIB_VERSION
 
   if [ "$ARCH" = "aarch64" ]; then
     # Use configure for ARM64 (llvm-mingw compatibility)

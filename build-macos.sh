@@ -58,7 +58,7 @@ FFMPEG_CONFIGURE_FLAGS+=(
 # Build lame
 PREFIX=$BASE_DIR/$OUTPUT_DIR
 
-do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame lame_svn
+do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame lame_svn $LAME_SVN_REVISION
   cd lame_svn
   LAMEC="--enable-nasm --disable-decoder --disable-frontend --prefix=$PREFIX --enable-static --disable-shared --host=$host --enable-cross-compile --target=$TARGET"
   echo "*** ./configure $LAMEC"
