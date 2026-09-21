@@ -55,7 +55,11 @@ FFMPEG_CONFIGURE_FLAGS+=(
 do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame lame_svn $LAME_SVN_REVISION
   cd lame_svn
     echo "Compiling lame: prefix $PREFIX"
-    ./configure --disable-decoder --prefix=$PREFIX --enable-static --disable-shared --host=$host
+    # LAME r6835 turns on security hardening by default. Its configure probe for
+    # -fstack-clash-protection succeeds on mingw-w64 gcc, but compiling real code
+    # with it ICEs (i386_pe_seh_unwind_emit / "open SEH entry at end of file").
+    # None of the hardening flags matter for a static lib we link into ffmpeg.
+    ./configure --disable-decoder --disable-hardening --prefix=$PREFIX --enable-static --disable-shared --host=$host
     make -j8
     make install
   cd ..

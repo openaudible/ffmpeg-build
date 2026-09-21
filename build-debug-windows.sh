@@ -59,7 +59,8 @@ FFMPEG_CONFIGURE_FLAGS+=(
 echo "=== Building LAME (debug) ==="
 do_svn_checkout https://svn.code.sf.net/p/lame/svn/trunk/lame lame_svn $LAME_SVN_REVISION
 cd lame_svn
-CFLAGS="$DEBUG_CFLAGS -Wno-incompatible-pointer-types" ./configure --disable-decoder --prefix=$PREFIX --enable-static --disable-shared --disable-frontend --host=$host
+# --disable-hardening: LAME's -fstack-clash-protection ICEs mingw-w64 gcc (see build-windows.sh)
+CFLAGS="$DEBUG_CFLAGS -Wno-incompatible-pointer-types" ./configure --disable-decoder --disable-hardening --prefix=$PREFIX --enable-static --disable-shared --disable-frontend --host=$host
 make -j$(nproc)
 make install
 cd ..
