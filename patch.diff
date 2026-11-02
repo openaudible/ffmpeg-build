@@ -1,7 +1,7 @@
 diff --git a/libavformat/movenc.c b/libavformat/movenc.c
 --- a/libavformat/movenc.c
 +++ b/libavformat/movenc.c
-@@ -4221,9 +4221,38 @@
+@@ -4221,9 +4221,40 @@
      mov_write_int8_metadata  (s, pb, "pgap",    "gapless_playback",1);
      mov_write_int8_metadata  (s, pb, "cpil",    "compilation", 1);
      mov_write_covr(pb, s);
@@ -21,6 +21,8 @@ diff --git a/libavformat/movenc.c b/libavformat/movenc.c
 +    mov_write_string_metadata(s, pb, "SRNM",    "series_name"      , 1);
 +    mov_write_string_metadata(s, pb, "SRSQ",    "series_sequence"  , 1);
 +    mov_write_string_metadata(s, pb, "SRLK",    "series_link"      , 1);
++    mov_write_string_metadata(s, pb, "\251mvn", "series_name"      , 1); // iTunes movement name -> ATL/Jellyfin SeriesTitle
++    mov_write_int8_metadata  (s, pb, "\251mvi", "series_sequence"  , 1); // iTunes movement number (int, 1 byte) -> ATL SeriesPart
 +    mov_write_string_metadata(s, pb, "\251WWW", "WWW"              , 1);
 +    mov_write_string_metadata(s, pb, "@PST",    "title_short"      , 1);
 +    mov_write_string_metadata(s, pb, "LANG",    "language"          , 1);
