@@ -55,7 +55,7 @@ rm -rf build-debug-*
 1. Run `./debug.sh` once to create build environment
 2. Edit sources directly in `build-debug-x86_64/`
 3. Re-run `./debug.sh` for fast incremental compilation
-4. Debug binary appears in `artifacts/ffmpeg-6.1-audio-x86_64-linux-gnu/bin/`
+4. Debug binary appears in `artifacts/ffmpeg-8.0-audio-x86_64-linux-gnu/bin/`
 
 ## Platform Support
 
@@ -87,6 +87,12 @@ Four patches modify the upstream FFmpeg 8.0 source:
 2. **patch.diff** - Audiobook metadata extensions + ftyp brand override
    - Adds custom M4A/M4B tags for audiobook-specific metadata
    - Supports: narrator, publisher, ASIN, series info, release date
+   - Series (`series_name`, `series_sequence`) is written three ways so
+     different readers find it: OpenAudible's own `SRNM`/`SRSQ`; iTunes
+     movement atoms `©mvn`/`©mvi` (Apple, Mp3tag, ATL/Jellyfin); and freeform
+     `----:com.apple.iTunes:SERIES`/`SERIES-PART` (Audiobookshelf, ffprobe).
+     `©mvi` is a 16-bit integer, written only for whole-number sequences;
+     values like `2.5` still go to `SRSQ` and `SERIES-PART`.
    - Enables arbitrary metadata via `atom:XXXX` prefix
    - Essential for OpenAudible's audiobook management features
    - Overrides the `ftyp` box for audio-only m4a/m4b output (`MODE_IPOD`):

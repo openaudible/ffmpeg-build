@@ -1,7 +1,65 @@
 diff --git a/libavformat/movenc.c b/libavformat/movenc.c
 --- a/libavformat/movenc.c
 +++ b/libavformat/movenc.c
-@@ -4221,9 +4221,38 @@
+@@ -4672,6 +4672,57 @@
+     return pos ? update_size(pb, pos) : 0;
+ }
+ 
++/* iTunes freeform "----" atom: mean=com.apple.iTunes, name=<name> */
++static int mov_write_itunes_freeform_tag(AVIOContext *pb, const char *name,
++                                         const char *value)
++{
++    const char *mean = "com.apple.iTunes";
++    size_t mean_len = strlen(mean), name_len = strlen(name);
++    int64_t pos;
++
++    if (!value || !value[0])
++        return 0;
++
++    pos = avio_tell(pb);
++    avio_wb32(pb, 0); /* size */
++    ffio_wfourcc(pb, "----");
++    avio_wb32(pb, 12 + mean_len);
++    ffio_wfourcc(pb, "mean");
++    avio_wb32(pb, 0);
++    avio_write(pb, mean, mean_len);
++    avio_wb32(pb, 12 + name_len);
++    ffio_wfourcc(pb, "name");
++    avio_wb32(pb, 0);
++    avio_write(pb, name, name_len);
++    mov_write_string_data_tag(pb, value, 0, 1);
++    return update_size(pb, pos);
++}
++
++/* 16-bit iTunes integer atom (e.g. movement number "\251mvi"), written only
++ * when the value is a whole number in range; "2.5" or "Book One" are skipped. */
++static int mov_write_int16_metadata(AVFormatContext *s, AVIOContext *pb,
++                                    const char *name, const char *tag)
++{
++    AVDictionaryEntry *t = av_dict_get(s->metadata, tag, NULL, 0);
++    char *end;
++    long num;
++
++    if (!t)
++        return 0;
++    num = strtol(t->value, &end, 10);
++    if (end == t->value || *end || num < 1 || num > INT16_MAX)
++        return 0;
++
++    avio_wb32(pb, 26);
++    ffio_wfourcc(pb, name);
++    avio_wb32(pb, 18);
++    ffio_wfourcc(pb, "data");
++    avio_wb32(pb, 0x15);
++    avio_wb32(pb, 0);
++    avio_wb16(pb, num);
++    return 26;
++}
++
+ /* iTunes meta data list */
+ static int mov_write_ilst_tag(AVIOContext *pb, MOVMuxContext *mov,
+                               AVFormatContext *s)
+@@ -4707,9 +4758,52 @@
      mov_write_int8_metadata  (s, pb, "pgap",    "gapless_playback",1);
      mov_write_int8_metadata  (s, pb, "cpil",    "compilation", 1);
      mov_write_covr(pb, s);
@@ -21,6 +79,20 @@ diff --git a/libavformat/movenc.c b/libavformat/movenc.c
 +    mov_write_string_metadata(s, pb, "SRNM",    "series_name"      , 1);
 +    mov_write_string_metadata(s, pb, "SRSQ",    "series_sequence"  , 1);
 +    mov_write_string_metadata(s, pb, "SRLK",    "series_link"      , 1);
++
++    // Series as read by common players/taggers: iTunes movement atoms
++    // (Apple, Mp3tag, ATL/Jellyfin) and freeform SERIES / SERIES-PART
++    // (Audiobookshelf, ffprobe, non-integer parts such as "2.5").
++    mov_write_string_metadata(s, pb, "\251mvn", "series_name"      , 1);
++    mov_write_int16_metadata (s, pb, "\251mvi", "series_sequence");
++    {
++        AVDictionaryEntry *series = av_dict_get(s->metadata, "series_name", NULL, 0);
++        AVDictionaryEntry *part   = av_dict_get(s->metadata, "series_sequence", NULL, 0);
++        if (series)
++            mov_write_itunes_freeform_tag(pb, "SERIES", series->value);
++        if (part)
++            mov_write_itunes_freeform_tag(pb, "SERIES-PART", part->value);
++    }
 +    mov_write_string_metadata(s, pb, "\251WWW", "WWW"              , 1);
 +    mov_write_string_metadata(s, pb, "@PST",    "title_short"      , 1);
 +    mov_write_string_metadata(s, pb, "LANG",    "language"          , 1);
@@ -42,7 +114,7 @@ diff --git a/libavformat/movenc.c b/libavformat/movenc.c
      return update_size(pb, pos);
  }
  
-@@ -5465,6 +5494,20 @@
+@@ -6014,6 +6108,20 @@
      avio_wb32(pb, 0); /* size */
      ffio_wfourcc(pb, "ftyp");
  
